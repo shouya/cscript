@@ -1,0 +1,12 @@
+Readme Document
+
+DTL(Dynamic Type Library) is the mainly type library of cscript, it supply full dynamic type support.
+
+DTL includes following modules:
+* dtlstr: string object
+* dtlarr: array object
+* dtlsub: function object
+* dtlhsh: hash table object
+
+provisional supply these modules only.
+
