@@ -32,7 +32,7 @@ dtlstr* str_new_cstr(const char* init) {
 dtlstr* str_copy(dtlstr** dest, dtlstr* src) {
     assert(src != 0 && dest != 0);
 
-    str_free(*dest);
+    str_free(dest);
     
     *dest = malloc(sizeof(struct dtlstr));
     (*dest)->len = src->len;
@@ -48,8 +48,8 @@ int str_to_cstr(dtlstr* str, char** bufptr) {
     assert(str != 0 && bufptr != 0);
 
     *bufptr = malloc(str->len + 1);
-    memcpy(buf, str->str, str->len);
-    buf[str->len + 1] = '\0';
+    memcpy(*bufptr, str->str, str->len);
+    (*bufptr)[str->len + 1] = '\0';
 
     return cplen;
 }
@@ -74,7 +74,7 @@ void str_free(dtlstr** str) {
 }
 
 void str_repl(dtlstr** dest, const dtlstr* str, int pos1,
-              int pos2, const varstr* repltext) {
+              int pos2, const dtlstr* repltext) {
     assert(dest != 0 && str != 0);
     assert(pos1 <= str->len &&
            pos1 >= -str->len &&
@@ -94,7 +94,7 @@ void str_repl(dtlstr** dest, const dtlstr* str, int pos1,
         (*dest)->str = malloc((*dest)->len);
 
         memcpy((*dest)->str, str->str, pos1);
-        memcpy((*dest)->str + pos1, str->str + pos1,
+        memcpy((*dest)->str + pos1, str->str + pos2,
                str->len - pos2);
     } else { /* replace mode */
         (*dest)->len = str->len - (pos2 - pos1) + repltext->len;
@@ -103,7 +103,7 @@ void str_repl(dtlstr** dest, const dtlstr* str, int pos1,
         memcpy((*dest)->str, str->str, pos1);
         memcpy((*dest)->str + pos1, repltext->str, repltext->len);
         memcpy((*dest)->str + pos1 + repltext->len,
-               str->str + pos1, str->len - pos2);
+               str->str + pos2, str->len - pos2);
     }
 }
 

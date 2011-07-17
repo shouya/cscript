@@ -9,7 +9,7 @@
 
 /* a dtl object */
 typedef struct dtlobj {
-    void* content; /* its content */dtlstr* src,
+    void* content; /* its content */
     int ref; /* its reference count */
     int type; /* object's type */
 } dtlobj;
@@ -39,10 +39,10 @@ int obj_print(dtlobj* obj, const char* format);
 dtlstr* str_new();
 dtlstr* str_new_cstr(const char* init);
 dtlstr* str_copy(dtlstr** dest, dtlstr* src);
-int str_to_cstr(dtlstr* str, char* buf, int len);
+int str_to_cstr(dtlstr* str, char** bufptr);
 int str_len(const dtlstr* str);
 void str_free(dtlstr** str);
-void str_repl(dtlstr** dest, const dtlstr* str, int pos1, int pos2, const varstr* repltext);
+void str_repl(dtlstr** dest, const dtlstr* str, int pos1, int pos2, const dtlstr* repltext);
 
 #ifdef DEBUG
 void str_print(const dtlstr* str);
