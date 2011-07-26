@@ -33,6 +33,9 @@ typedef struct dtlarr {
 /* dtl object's operartion */
 void obj_incref(dtlobj* obj);
 void obj_decref(dtlobj* obj);
+void obj_incref_range(dtlobj** objarr, int length);
+void obj_decref_range(dtlobj** objarr, int length);
+
 void obj_free(dtlobj** obj);
 int obj_isnil(const dtlobj* obj);
 dtlobj* obj_new(int type, ...);
@@ -56,15 +59,15 @@ void str_print(const dtlstr* str);
 
 /* dtl array's operation */
 dtlarr* arr_new(void);
+dtlarr* arr_new_len(int initlen);
 dtlarr* arr_new_obj(dtlobj* elem);
 dtlarr* arr_copy(dtlarr** dest, dtlarr* src);
-dtlarr* arr_deep_copy(dtlarr** dest, dtlarr* src);
 int arr_len(const dtlarr* arr);
 dtlobj* arr_get(dtlarr* arr, int pos);
 voib arr_free(dtlarr** arr);
 void arr_insert(dtlarr* arr, int pos, dtlobj* obj);
 void arr_replace(dtlarr* arr, int pos1, int pos2, dtlarr* replarr);
-void arr_range(dtlarr** newarr, int arr, int pos1, int pos2);
+void arr_range(dtlarr** newarr, dtlarr* arr, int pos1, int pos2);
 
 
 #endif /* _DTL_DTL_H_ */

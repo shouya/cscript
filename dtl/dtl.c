@@ -16,6 +16,27 @@ void obj_incref(dtlobj* obj) {
     }
 }
 
+void obj_incref_range(dtlobj** objarr, int length) {
+    int i;
+
+    assert(objarr != 0);
+
+    for (i = 0; i != length; ++i) {
+        obj_incref(objarr[i]);
+    }
+}
+
+void obj_decref_range(dtlobj** objarr, int length) {
+    int i;
+
+    assert(objarr != 0);
+
+    for (i = 0; i != length; ++i) {
+        obj_decref(objarr[i]);
+    }
+}
+
+
 void obj_decref(dtlobj* obj) {
     assert(obj != 0);
 
@@ -228,6 +249,134 @@ void str_print(const dtlstr* str) {
 /* end dtl string */
 
 /* dtl array*/
+dtlarr* arr_new(void) {
+    dtlarr* newarr = malloc(sizeof(dtlarr));
+
+    newarr->a_len = newarr->len = 0;
+    newarr->data = 0;
+
+    return newarr;
+}
+
+dtlarr* arr_new_len(int initlen) {
+    dtlarr* newarr;
+
+    assert(initlen >= 0);
+
+    if (initlen == 0) {
+        return arr_new();
+    }
+
+    newarr = malloc(sizeof(dtlarr));
+
+    newarr->data = malloc(sizeof(dtlobj*) * initlen);
+    newarr->len = 0;
+    newarr->a_len = initlen;
+
+    return newarr;
+}
+
+dtlarr* arr_new_obj(dtlobj* elem) {
+    dtlarr* newarr = malloc(sizeof(dtlarr));
+
+    newarr->data = malloc(sizeof(dtlobj*) * 1);
+    newarr->a_len = newarr->len = 1;
+
+    if (elem == 0) elem = obj_nil;
+
+    newarr->data[0] = elem;
+
+    obj_incref(elem);
+
+    return newarr;
+}
+
+dtlarr* arr_copy(dtlarr** dest, dtlarr* src) {
+    assert(dest != 0 && src != 0);
+
+    arr_free(arr);
+
+
+    *dest = arr_new_len(src->len);
+    memcpy((*dest)->data, src->data, src->len * sizeof(dtlobj*));
+    (*dest)->len = src->len;
+    obj_incref_range((*dest)->data, (*dest)->len);
+}
+
+
+int arr_len(const dtlarr* arr) {
+    assert(arr != 0);
+
+    return arr->len;
+}
+
+dtlobj* arr_get(dtlarr* arr, int pos) {
+    assert(arr != 0);
+    assert(pos <= arr->len &&
+           pos >= -arr->len);
+
+    if (pos < 0) pos += arr->len;
+
+    /* i cannot decide the following statement is or not useful*/
+    obj_incref(arr->data[pos]);
+
+    return arr->data[pos];
+}
+
+voib arr_free(dtlarr** arr) {
+    assert(arr != 0);
+
+    if (*arr == 0) {
+        return;
+    }
+
+    if ((*arr)->len != 0) {
+        obj_decref_range((*arr)->data, (*arr)->len);
+    }
+
+    free(*arr);
+    *arr = 0;
+}
+
+void arr_insert(dtlarr* arr, int pos, dtlobj* obj) {
+    assert(arr != 0);
+    assert(pos <= arr->len &&
+           pos >= -arr->len);
+
+    if (pos < 0) pos += arr->len;
+
+    if (arr->len == arr->a_len) {
+        arr->data = realloc(arr->data, arr->len + 1);
+        arr->a_len = arr->len + 1;
+    }
+
+    memmove(&arr->data[pos + 1], &arr->data[pos], (arr->len - pos) * sizeof(dtlobj*));
+
+    if (elem == 0) elem = obj_nil;
+    newarr->data[pos] = elem;
+    obj_incref(elem);
+
+    ++arr->len;
+}
+
+void arr_replace(dtlarr* arr, int pos1, int pos2, dtlarr* replarr);
+
+void arr_range(dtlarr** newarr, dtlarr* arr, int pos1, int pos2) {
+    assert(newarr != 0 && arr != 0);
+    assert(pos1 <= arr->len &&
+           pos1 >= -arr->len &&
+           pos2 <= arr->len &&
+           pos2 >= -arr->len);
+
+    if (pos1 < 0) pos1 += arr->len;
+    if (pos2 < 0) pos2 += arr->len;
+    if (pos2 < pos1) pos2 ^= pos1 ^= pos2 ^= pos1; /* swap */
+
+    *newarr = arr_new_len(pos2 - pos1);
+    memcpy((*newarr)->data, &arr->data[pos1], (pos2 - pos1) * sizeof(dtlobj*));
+    (*newarr)->len = pos2 - pos1;
+    obj_incref_range((*newarr)->data, pos2 - pos1);
+}
 
 /* end dtl array*/
 
