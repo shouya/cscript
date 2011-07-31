@@ -6,8 +6,10 @@
 
 #include "dtl.h"
 
-/* dtl object */
+dtlobj* obj_nil = obj_newnil();
 
+
+/* dtl object */
 void obj_incref(dtlobj* obj) {
     assert(obj != 0);
 
@@ -46,6 +48,16 @@ void obj_decref(dtlobj* obj) {
     if (obj->ref == 0) {
         obj_free(obj);
     }
+}
+
+static dtlobj* obj_newnil(void) {
+    dtlobj* obj = malloc(sizeof(dtlobj));
+
+    obj->content = 0;
+    obj->type = DTL_NIL;
+    obj->ref = -1;
+
+    return obj;
 }
 
 void obj_free(dtlobj** obj) {
@@ -102,17 +114,20 @@ dtlobj* obj_new(int type, ...) {
     va_end(ap);
 }
 
-int obj_to_printable(dtlobj* obj, char** bufptr) {
+int obj_printable(dtlobj* obj, char** bufptr) {
     assert(obj != 0 && bufptr != 0);
 
     switch (obj->type) {
     case DTL_NIL:
         *bufptr = malloc(1);
         strcpy(*bufptr, "");
-        return 0;
+        return 1;
 
     case DTL_STR:
-        return (str_to_cstr((dtlstr*)obj->content, bufptr));
+        return (str_printable((dtlstr*)obj->content, bufptr));
+
+    case DTL_ARR:
+        return (arr_printable((dtlarr*)obj->content, bufptr));
 
     default:
         assert(0);
@@ -161,15 +176,13 @@ dtlstr* str_copy(dtlstr** dest, dtlstr* src) {
 }
 
 int str_to_cstr(dtlstr* str, char** bufptr) {
-    int cplen;
-
     assert(str != 0 && bufptr != 0);
 
     *bufptr = malloc(str->len + 1);
     memcpy(*bufptr, str->str, str->len);
     (*bufptr)[str->len + 1] = '\0';
 
-    return cplen;
+    return str->len + 1;
 }
 
 int str_len(const dtlstr* str) {
@@ -237,13 +250,39 @@ void str_substr(dtlstr** dest, const dtlstr* str, int pos1, int pos2) {
     if (pos2 < pos1) pos2 ^= pos1 ^= pos2 ^= pos1; /* swap */
     /* TODO */
 }
-
-
+int str_printable(dtlstr* str, char** bufptr) {
 #ifdef DEBUG
-void str_print(const dtlstr* str) {
-    fwrite(str->str, 1, str->len, stdout);
-}
+    int cplen;
+    char* lenbuf = malloc(SMALL_BUF_SIZE);
+
+    assert(str != 0 && bufptr != 0);
+
+    cplen += sprintf(lenbuf, "%d", str->len);
+    cplen += str->len;
+    cplen += 3; /* char '[' & ']' & 's'*/
+
+    *bufptr = malloc(cplen + 1);
+    
+    strcpy(*bufptr, "[s");
+    strcat(*bufptr, lenbuf);
+    strcat(*bufptr, "]");    
+    memcpy(*bufptr + cplen - str->len,
+           str->str, str->len);
+    (*bufptr)[str->len + 1] = '\0';
+
+    free(lenbuf);
+
+    return cplen;
+#else /* DEBUG */
+    return str_to_cstr(str, bufptr);
 #endif /* DEBUG */
+}
+
+void str_print(FILE* stream, dtlstr* str) {
+    char* buf = 0;
+    str_printable(str, &buf);
+    fputs(buf, stream);
+}
 
 
 /* end dtl string */
@@ -359,7 +398,33 @@ void arr_insert(dtlarr* arr, int pos, dtlobj* obj) {
     ++arr->len;
 }
 
-void arr_replace(dtlarr* arr, int pos1, int pos2, dtlarr* replarr);
+void arr_replace(dtlarr* arr, int pos1, int pos2, dtlarr* replarr) {
+    assert(arr != 0);
+    assert(pos1 <= arr->len &&
+           pos1 >= -arr->len &&
+           pos2 <= arr->len &&
+           pos2 >= -arr->len);
+
+    /* tweak pos to avaliable position */
+    if (pos1 < 0) pos1 += arr->len;
+    if (pos2 < 0) pos2 += arr->len;
+    if (pos2 < pos1) pos2 ^= pos1 ^= pos2 ^= pos1; /* swap */
+    
+    obj_decref_range(&arr->data[pos1], pos2 - pos1);
+    if (repltext == 0) { /* erase mode */
+        // arr->len -= pos2 - pos1;
+        memmove(&arr->data[pos1], &arr->data[pos2], arr->len - pos2);
+
+        arr->len -= pos2 - pos1;
+    } else { /* replace mode */
+        memmove(&arr->data[pos1 + replarr->len],
+                &arr->data[pos2], arr->len - pos2);
+        memcpy(&arr->data[pos1], replarr->data, replarr->len);
+        obj_incref_range(&arr->data[pos1], replarr->len);
+
+        arr->len += replarr->len - (pos2 - pos1);
+    }
+}
 
 void arr_range(dtlarr** newarr, dtlarr* arr, int pos1, int pos2) {
     assert(newarr != 0 && arr != 0);
@@ -377,6 +442,8 @@ void arr_range(dtlarr** newarr, dtlarr* arr, int pos1, int pos2) {
     (*newarr)->len = pos2 - pos1;
     obj_incref_range((*newarr)->data, pos2 - pos1);
 }
+
+
 
 /* end dtl array*/
 

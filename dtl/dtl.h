@@ -1,10 +1,10 @@
 #ifndef _DTL_DTL_H_
 #define _DTL_DTL_H_
 
-#define DTL_NIL /* null reference */
-#define DTL_STR /* string */
-#define DTL_ARR /* array */
-#define DTL_HSH /* hash table(reserve, i have not been design how to wrote it) */
+#define DTL_NIL 0/* null reference */
+#define DTL_STR 1/* string */
+#define DTL_ARR 2/* array */
+#define DTL_HSH 3/* hash table(reserve, i have not been design how to wrote it) */
 
 
 /* a dtl object */
@@ -39,7 +39,8 @@ void obj_decref_range(dtlobj** objarr, int length);
 void obj_free(dtlobj** obj);
 int obj_isnil(const dtlobj* obj);
 dtlobj* obj_new(int type, ...);
-int obj_to_printable(dtlobj* obj, char** bufptr);
+int obj_printable(dtlobj* obj, char** bufptr);
+void obj_print(FILE* stream, dtlobj* obj);
 
 
 /* dtl string's operation */
@@ -50,12 +51,10 @@ int str_to_cstr(dtlstr* str, char** bufptr);
 int str_len(const dtlstr* str);
 void str_free(dtlstr** str);
 void str_replace(dtlstr** dest, const dtlstr* str, int pos1, int pos2, const dtlstr* repltext);
-void str_substr(dtlstr** dest, const dtlstr* str, int pos1, int pos2);
 
-
-#ifdef DEBUG
-void str_print(const dtlstr* str);
-#endif /* DEBUG */
+void str_substr(dtlstr** dest, const dtlstr* str, int pos1, int pos2); /* TODO */
+int str_printable(dtlstr* str, char** bufptr);
+void str_print(FILE* stream, dtlstr* str);
 
 /* dtl array's operation */
 dtlarr* arr_new(void);
@@ -68,6 +67,8 @@ voib arr_free(dtlarr** arr);
 void arr_insert(dtlarr* arr, int pos, dtlobj* obj);
 void arr_replace(dtlarr* arr, int pos1, int pos2, dtlarr* replarr);
 void arr_range(dtlarr** newarr, dtlarr* arr, int pos1, int pos2);
+void arr_printable(dtlarr* arr, dtlarr);
+void arr_print(FILE* stream);
 
 
 #endif /* _DTL_DTL_H_ */
