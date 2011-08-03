@@ -6,8 +6,18 @@
 
 #include "dtl.h"
 
-dtlobj* obj_nil = obj_newnil();
+#define SMALL_BUF_SIZE 16
 
+static dtlobj* obj_newnil(void);
+
+dtlobj* obj_nil;
+
+/* libdtl begin */
+void dtl_init(void) {
+    /* initialize nil object */
+    obj_nil = obj_newnil();
+}
+/* end of libdtl */
 
 /* dtl object */
 void obj_incref(dtlobj* obj) {
@@ -46,18 +56,19 @@ void obj_decref(dtlobj* obj) {
         --obj->ref;
     }
     if (obj->ref == 0) {
-        obj_free(obj);
+        obj_free(&obj);
     }
 }
 
-static dtlobj* obj_newnil(void) {
-    dtlobj* obj = malloc(sizeof(dtlobj));
+/* static */
+dtlobj* obj_newnil(void) {
+    static dtlobj obj;
 
-    obj->content = 0;
-    obj->type = DTL_NIL;
-    obj->ref = -1;
+    obj.content = 0;
+    obj.type = DTL_NIL;
+    obj.ref = -1;
 
-    return obj;
+    return &obj;
 }
 
 void obj_free(dtlobj** obj) {
@@ -71,7 +82,7 @@ void obj_free(dtlobj** obj) {
         break;
 
     case DTL_STR:
-        str_free(&((*obj)->content));
+        str_free((dtlstr**)&((*obj)->content));
         free(*obj);
         break;
 
@@ -104,14 +115,17 @@ dtlobj* obj_new(int type, ...) {
    
     switch (type) {
     case DTL_STR: {
-        char* str = va_arg(char*);
-        dtl->content = str_new_cstr(str);
+        char* str = va_arg(ap, char*);
+        obj->content = str_new_cstr(str);
     } break;
         /* TODO */
     default:
         assert(0);
+        return 0; /* gcc's warning */
     }
     va_end(ap);
+
+    return obj;
 }
 
 int obj_printable(dtlobj* obj, char** bufptr) {
@@ -248,7 +262,11 @@ void str_substr(dtlstr** dest, const dtlstr* str, int pos1, int pos2) {
     if (pos1 < 0) pos1 += str->len;
     if (pos2 < 0) pos2 += str->len;
     if (pos2 < pos1) pos2 ^= pos1 ^= pos2 ^= pos1; /* swap */
-    /* TODO */
+
+    *dest = str_new();
+    (*dest)->str = malloc(pos2 - pos1);
+    memcpy((*dest)->str, &str->str[pos1], pos2 - pos1);
+    (*dest)->len = pos2 - pos1;
 }
 int str_printable(dtlstr* str, char** bufptr) {
 #ifdef DEBUG
@@ -257,7 +275,7 @@ int str_printable(dtlstr* str, char** bufptr) {
 
     assert(str != 0 && bufptr != 0);
 
-    cplen += sprintf(lenbuf, "%d", str->len);
+    cplen = sprintf(lenbuf, "%d", str->len);
     cplen += str->len;
     cplen += 3; /* char '[' & ']' & 's'*/
 
@@ -268,7 +286,7 @@ int str_printable(dtlstr* str, char** bufptr) {
     strcat(*bufptr, "]");    
     memcpy(*bufptr + cplen - str->len,
            str->str, str->len);
-    (*bufptr)[str->len + 1] = '\0';
+    (*bufptr)[cplen + 1] = '\0';
 
     free(lenbuf);
 
@@ -333,20 +351,21 @@ dtlarr* arr_new_obj(dtlobj* elem) {
 dtlarr* arr_copy(dtlarr** dest, dtlarr* src) {
     assert(dest != 0 && src != 0);
 
-    arr_free(arr);
-
+    arr_free(dest);
 
     *dest = arr_new_len(src->len);
     memcpy((*dest)->data, src->data, src->len * sizeof(dtlobj*));
     (*dest)->len = src->len;
     obj_incref_range((*dest)->data, (*dest)->len);
+
+    return (*dest);
 }
 
 
 int arr_len(const dtlarr* arr) {
     assert(arr != 0);
 
-    return arr->len;
+    return (arr->len);
 }
 
 dtlobj* arr_get(dtlarr* arr, int pos) {
@@ -359,10 +378,10 @@ dtlobj* arr_get(dtlarr* arr, int pos) {
     /* i cannot decide the following statement is or not useful*/
     obj_incref(arr->data[pos]);
 
-    return arr->data[pos];
+    return (arr->data[pos]);
 }
 
-voib arr_free(dtlarr** arr) {
+void arr_free(dtlarr** arr) {
     assert(arr != 0);
 
     if (*arr == 0) {
@@ -391,9 +410,9 @@ void arr_insert(dtlarr* arr, int pos, dtlobj* obj) {
 
     memmove(&arr->data[pos + 1], &arr->data[pos], (arr->len - pos) * sizeof(dtlobj*));
 
-    if (elem == 0) elem = obj_nil;
-    newarr->data[pos] = elem;
-    obj_incref(elem);
+    if (obj == 0) obj = obj_nil;
+    arr->data[pos] = obj;
+    obj_incref(obj);
 
     ++arr->len;
 }
@@ -411,7 +430,7 @@ void arr_replace(dtlarr* arr, int pos1, int pos2, dtlarr* replarr) {
     if (pos2 < pos1) pos2 ^= pos1 ^= pos2 ^= pos1; /* swap */
     
     obj_decref_range(&arr->data[pos1], pos2 - pos1);
-    if (repltext == 0) { /* erase mode */
+    if (replarr == 0) { /* erase mode */
         // arr->len -= pos2 - pos1;
         memmove(&arr->data[pos1], &arr->data[pos2], arr->len - pos2);
 

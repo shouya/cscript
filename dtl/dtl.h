@@ -1,6 +1,8 @@
 #ifndef _DTL_DTL_H_
 #define _DTL_DTL_H_
 
+#include <stdio.h> /* for FILE structure */
+
 #define DTL_NIL 0/* null reference */
 #define DTL_STR 1/* string */
 #define DTL_ARR 2/* array */
@@ -29,6 +31,9 @@ typedef struct dtlarr {
     int len; /* item count of the array */
     int a_len; /* allocate count of the array */
 } dtlarr;
+
+/* libdtl's global operation */
+void dtl_init(void);
 
 /* dtl object's operartion */
 void obj_incref(dtlobj* obj);
@@ -63,11 +68,11 @@ dtlarr* arr_new_obj(dtlobj* elem);
 dtlarr* arr_copy(dtlarr** dest, dtlarr* src);
 int arr_len(const dtlarr* arr);
 dtlobj* arr_get(dtlarr* arr, int pos);
-voib arr_free(dtlarr** arr);
+void arr_free(dtlarr** arr);
 void arr_insert(dtlarr* arr, int pos, dtlobj* obj);
 void arr_replace(dtlarr* arr, int pos1, int pos2, dtlarr* replarr);
 void arr_range(dtlarr** newarr, dtlarr* arr, int pos1, int pos2);
-void arr_printable(dtlarr* arr, dtlarr);
+int arr_printable(dtlarr* arr, char** bufptr);
 void arr_print(FILE* stream);
 
 
