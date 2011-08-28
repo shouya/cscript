@@ -12,13 +12,6 @@
 #define STKNO_GLOBAL 0
 #define STKNO_CURRENT (-1)
 
-typedef struct sym_t {
-    const char* name; /* special */
-    int flags; /* special */
-    void* body; /* special(dtlobj*) */
-} sym_t;
-
-
 typedef int stack_no;
 
 #ifdef __cplusplus
@@ -29,14 +22,17 @@ extern "C" {
     stack_no current_stack(void);
     void push_stack(void);
     void pop_stack(void);
-    void forall_stack(void (*do_what)(sym_t*));
+    int forall_stack(stack_no which_stack,
+                     void (*do_what)(int* flags, void** body));
     
-    int delete_symbol(stack_no which_stack, const sym_t* symbol);
-    int insert_symbol(stack_no which_stack, const sym_t* symbol);
-    int moveto_global(stack_no old_tackno, const char* symbol_name);
+    int delete_symbol(stack_no which_stack, const char* name);
+    int insert_symbol(stack_no which_stack,
+                      const char* name, int flags, void* body);
+    int moveto_global(stack_no old_tackno, const char* name);
     
-    int find_byname(const char* sym_name,
-                    const sym_t** sym_ptr, stack_no* which_stack);
+    int find_byname(const char* name, /* name special to find */
+                    int* flags, void** body, /* flags & body returns */
+                    stack_no* which_stack); /* location stack returns */
 
 
 #ifdef __cplusplus

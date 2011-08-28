@@ -1,11 +1,19 @@
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
 #include <map>
 #include <vector>
+#include <string>
 
 #include "export.h"
 
 using namespace std;
+
+typedef struct sym_t {
+    int flags; /* special */
+    void* body; /* special(dtlobj*) */
+} sym_t;
 
 typedef map<string, sym_t> stack_t;
 typedef vector<stack_t> stack_array_t;
@@ -33,60 +41,74 @@ void pop_stack(void) {
     crt_stack = &mainstack.back();
 }
 
-void forall_stack(void (*do_what)(sym_t*)) {
-    stack_t::iterator it = stack->begin();
-    for (; it != stack->end(); ++it) {
-        (*do_what)(*it);
+int forall_stack(stack_no which_stack,
+                 void (*do_what)(int* flags, void** body)) {
+    stack_t* thestack = get_stack_byno(which_stack);
+    stack_t::iterator it;
+
+    if (thestack == NULL) {
+        return ERR_WRONG_ARG;
     }
+    it = thestack->begin();
+    for (; it != thestack->end(); ++it) {
+        (*do_what)(&it->second.flags, &it->second.body);
+    }
+    return ERR_NO_ERROR;
 }
 
-int delete_symbol(stack_no which_stack, const sym_t* symbol) {
+int delete_symbol(stack_no which_stack, const char* name) {
     stack_t* thestack = get_stack_byno(which_stack);
     stack_t::iterator it;
 
     if (thestack == NULL ||
-        symbol == NULL ||
-        symbol->name == NULL) {
+        name == NULL) {
         return ERR_WRONG_ARG;
     }
-    it = thestack->find(symbol->name);
+    it = thestack->find(name);
     if (it == thestack->end()) {
         return ERR_NOT_FOUND;
     }
+
     thestack->erase(it);
 
     return ERR_NO_ERROR;
 }
 
-int insert_symbol(stack_no which_stack, const sym_t* symbol) {
+int insert_symbol(stack_no which_stack,
+                  const char* name, int flags, void* body) {
     stack_t* thestack = get_stack_byno(which_stack);
+    stack_t::iterator it;
 
     if (thestack == NULL ||
-        symbol == NULL ||
-        symbol->name == NULL) {
+        name != NULL) {
         return ERR_WRONG_ARG;
     }
-    if (thestack->find(symbol->name) != thestack->end()) {
+    if (thestack->find(name) != thestack->end()) {
         return ERR_ITEM_EXIST;
     }
-    thestack->insert(*symbol);
+
+    it = thestack->insert(
+        pair<string, sym_t>(name, sym_t())).first;
+
+    it->second.flags = flags;
+    it->second.body = body;
 
     return ERR_NO_ERROR;
 }
 
-int moveto_global(stack_no old_stackno, const char* symbol_name) {
+int moveto_global(stack_no old_stackno, const char* name) {
     stack_t* thestack = get_stack_byno(old_stackno);
     stack_t::iterator it;
     stack_t* globalstack = get_stack_byno(STKNO_GLOBAL);
 
     if (thestack == NULL ||
-        symbol == NULL ||
-        symbol->name == NULL) {
+        name == NULL) {
         return ERR_WRONG_ARG;
     }
-    if ((it = thestack->find(symbol_name))== thestack->end()) {
+    if ((it = thestack->find(name)) == thestack->end()) {
         return ERR_NOT_FOUND;
     }
+
     globalstack->insert(*it);
     thestack->erase(it);
 
@@ -94,20 +116,21 @@ int moveto_global(stack_no old_stackno, const char* symbol_name) {
 }
 
 
-int find_byname(const char* sym_name,
-                const sym_t** sym_ptr, stack_no* which_stack) {
+int find_byname(const char* name, /* name special to find */
+                int* flags, void** body, /* flags & body returns */
+                stack_no* which_stack) {
     stack_no crt_stk_no;
     stack_t::iterator it;
     stack_t* crt_stk = NULL;
 
-    if (sym_ptr == NULL || sym_name == NULL) {
+    if (name == NULL) {
         return ERR_WRONG_ARG;
     }
 
     crt_stk_no = current_stack();
     for (; crt_stk_no >= 0; --crt_stk_no) {
         crt_stk = get_stack_byno(crt_stk_no);
-        it = crt_stk->find(sym_name);
+        it = crt_stk->find(name);
         if (it == crt_stk->end()) {
             /* Not Found */
             continue;
@@ -116,7 +139,13 @@ int find_byname(const char* sym_name,
         if (which_stack != NULL) {
             *which_stack = crt_stk_no;
         }
-        *sym_ptr = &*it;
+        if (flags != NULL) {
+            *flags = it->second.flags;
+        }
+        if (body != NULL) {
+            *body = it->second.body;
+        }
+
         return ERR_NO_ERROR;
     }
     return ERR_NOT_FOUND;
@@ -129,11 +158,11 @@ stack_t* get_stack_byno(stack_no stackno) {
         return NULL;
     }
     if (stackno == STKNO_CURRENT) {
-        return current_stack();
+        return get_stack_byno(current_stack());
     }
     if (stackno == STKNO_GLOBAL) {
         return &mainstack.front();
     }
 
-    return (&*mainstack.at(stackno));
+    return (&mainstack.at(stackno));
 }
