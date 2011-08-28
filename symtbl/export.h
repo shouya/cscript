@@ -14,9 +14,8 @@
 
 typedef struct sym_t {
     const char* name; /* special */
-    int unique_id;
     int flags; /* special */
-    void* body; /* special */
+    void* body; /* special(dtlobj*) */
 } sym_t;
 
 
@@ -34,14 +33,14 @@ extern "C" {
     
     int delete_symbol(stack_no which_stack, const sym_t* symbol);
     int insert_symbol(stack_no which_stack, const sym_t* symbol);
-    int moveto_global(stack_no old_stackno, const sym_t* symbol);
+    int moveto_global(stack_no old_tackno, const char* symbol_name);
     
-    stack_no find_byname(const char* sym_name, sym_t** sym_ptr);
-    stack_no find_byid(int sym_id, sym_t** sym_ptr);
+    int find_byname(const char* sym_name,
+                    const sym_t** sym_ptr, stack_no* which_stack);
 
 
 #ifdef __cplusplus
-}
+} /* extern "C" { */
 #endif
 
 #endif /* SYMTBL_EXPORT_H */

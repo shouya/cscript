@@ -74,7 +74,7 @@ int insert_symbol(stack_no which_stack, const sym_t* symbol) {
     return ERR_NO_ERROR;
 }
 
-int moveto_global(stack_no old_stackno, const sym_t* symbol) {
+int moveto_global(stack_no old_stackno, const char* symbol_name) {
     stack_t* thestack = get_stack_byno(old_stackno);
     stack_t::iterator it;
     stack_t* globalstack = get_stack_byno(STKNO_GLOBAL);
@@ -84,9 +84,42 @@ int moveto_global(stack_no old_stackno, const sym_t* symbol) {
         symbol->name == NULL) {
         return ERR_WRONG_ARG;
     }
-    if (thestack->find(symbol->name) == thestack->end()) {
-        
+    if ((it = thestack->find(symbol_name))== thestack->end()) {
+        return ERR_NOT_FOUND;
     }
+    globalstack->insert(*it);
+    thestack->erase(it);
+
+    return ERR_NO_ERROR;
+}
+
+
+int find_byname(const char* sym_name,
+                const sym_t** sym_ptr, stack_no* which_stack) {
+    stack_no crt_stk_no;
+    stack_t::iterator it;
+    stack_t* crt_stk = NULL;
+
+    if (sym_ptr == NULL || sym_name == NULL) {
+        return ERR_WRONG_ARG;
+    }
+
+    crt_stk_no = current_stack();
+    for (; crt_stk_no >= 0; --crt_stk_no) {
+        crt_stk = get_stack_byno(crt_stk_no);
+        it = crt_stk->find(sym_name);
+        if (it == crt_stk->end()) {
+            /* Not Found */
+            continue;
+        }
+        /* Found */
+        if (which_stack != NULL) {
+            *which_stack = crt_stk_no;
+        }
+        *sym_ptr = &*it;
+        return ERR_NO_ERROR;
+    }
+    return ERR_NOT_FOUND;
 }
 
 /* internal funtion */
