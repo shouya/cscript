@@ -43,7 +43,7 @@ void obj_decref_range(dtlobj** objarr, int length);
 
 void obj_free(dtlobj** obj);
 int obj_isnil(const dtlobj* obj);
-dtlobj* obj_new(int type, ...);
+dtlobj* obj_new(int type);
 int obj_printable(dtlobj* obj, char** bufptr);
 void obj_print(FILE* stream, dtlobj* obj);
 
@@ -52,6 +52,7 @@ void obj_print(FILE* stream, dtlobj* obj);
 dtlstr* str_new(void);
 dtlstr* str_new_cstr(const char* init);
 dtlstr* str_copy(dtlstr** dest, dtlstr* src);
+void str_assign_cstr(dtlstr** dest, const char* str);
 int str_to_cstr(dtlstr* str, char** bufptr);
 int str_len(const dtlstr* str);
 void str_free(dtlstr** str);

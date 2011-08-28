@@ -99,9 +99,8 @@ int obj_isnil(const dtlobj* obj) {
     return (obj->type == DTL_NIL);
 }
 
-dtlobj* obj_new(int type, ...) {
+dtlobj* obj_new(int type) {
     dtlobj* obj;
-    va_list ap;
 
     if (type == DTL_NIL) {
         return obj_nil;
@@ -111,19 +110,17 @@ dtlobj* obj_new(int type, ...) {
     obj->type = type;
     obj->ref = 0;
 
-    va_start(ap, type);
-   
     switch (type) {
     case DTL_STR: {
-        char* str = va_arg(ap, char*);
-        obj->content = str_new_cstr(str);
+        obj->content = str_new();
     } break;
-        /* TODO */
+    case DTL_ARR: {
+        obj->content = arr_new();
+    } break;
     default:
         assert(0);
         return 0; /* gcc's warning */
     }
-    va_end(ap);
 
     return obj;
 }
@@ -188,6 +185,12 @@ dtlstr* str_copy(dtlstr** dest, dtlstr* src) {
 
     return *dest;
 }
+
+void str_assign_cstr(dtlstr** dest, const char* str) {
+    assert(dest != 0);
+    /* TODO */
+}
+
 
 int str_to_cstr(dtlstr* str, char** bufptr) {
     assert(str != 0 && bufptr != 0);
