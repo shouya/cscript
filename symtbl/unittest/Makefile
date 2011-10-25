@@ -1,4 +1,8 @@
-test: unittest.c ../export.h ../mapmodel.cpp
-	gcc -c unittest.c -o unittest.o -Wall
-	gcc -c ../mapmodel.cpp -o mapmodel.o -Wall -lstdc++
-	gcc -o test unittest.o mapmodel.o -Wall
+all: test
+
+
+lib: ../mapmodel.cpp ../export.h
+	gcc -Wall -shared -o librtc.so ../mapmodel.cpp -lstdc++
+
+test: unittest.c lib
+	gcc -Wall -o unittest unittest.c -L. -lrtc

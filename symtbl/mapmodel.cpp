@@ -42,7 +42,7 @@ void pop_stack(void) {
 }
 
 int forall_stack(stack_no which_stack,
-                 void (*do_what)(int* flags, void** body)) {
+                 void (*do_what)(const char*, int*, void**)) {
     stack_t* thestack = get_stack_byno(which_stack);
     stack_t::iterator it;
 
@@ -51,7 +51,7 @@ int forall_stack(stack_no which_stack,
     }
     it = thestack->begin();
     for (; it != thestack->end(); ++it) {
-        (*do_what)(&it->second.flags, &it->second.body);
+        (*do_what)(it->first.c_str(), &it->second.flags, &it->second.body);
     }
     return ERR_NO_ERROR;
 }
@@ -80,7 +80,7 @@ int insert_symbol(stack_no which_stack,
     stack_t::iterator it;
 
     if (thestack == NULL ||
-        name != NULL) {
+        name == NULL) {
         return ERR_WRONG_ARG;
     }
     if (thestack->find(name) != thestack->end()) {
@@ -151,7 +151,7 @@ int find_byname(const char* name, /* name special to find */
     return ERR_NOT_FOUND;
 }
 
-/* internal funtion */
+/* static funtion */
 stack_t* get_stack_byno(stack_no stackno) {
     if (stackno >= stack_level() ||
         (stackno < 0 && stackno != STKNO_CURRENT)) {
@@ -166,3 +166,4 @@ stack_t* get_stack_byno(stack_no stackno) {
 
     return (&mainstack.at(stackno));
 }
+
