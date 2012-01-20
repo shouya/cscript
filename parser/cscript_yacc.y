@@ -1,5 +1,10 @@
 %{
+#include <stdio.h>
+#include <stdlib.h>
 #include <stdarg.h>
+
+int emit(char *s, ...);
+void yyerror(char *s, ...);
 %}
 
 %union {
@@ -15,13 +20,18 @@
 %token <strval> NAME
 %token <intval> EQUALITY RELATION
 %token <intval> ASSIGNMENT
+%token <intval> SHIFT
+%token <intval> BOOL
 
 /* key word */
 %token IF ELSE ELSIF UNLESS WHILE FOR DO RETURN IMPORT IN
 
 /* operator */
-%token INCREASE DECREASE LOGIAND LOGIOR SHIFT
-/*     ++       --       &&      ||     << >> */
+%token INCREASE DECREASE LOGIAND LOGIOR
+/*     ++       --       &&      ||    */
+
+
+%type <strval> name string
 
 /* operator precedence (low->high) */
 
@@ -60,10 +70,10 @@ block_stmt:	block
 
 /* literal */
 number:		INTNUM		{ emit("INT(%d)", $1); }
-	|	FLTNUM		{ emit("FLOAT(%g)", $2); }
+	|	FLTNUM		{ emit("FLOAT(%g)", $1); }
 	;
 
-string:		STRING		{ emit("STR(%s)", $1); }
+string:		STRING		{ emit("STR(%s)", $1); $$ = $1; }
 	;
 
 literal:	number
@@ -71,7 +81,7 @@ literal:	number
 	;
 
 /* assignment */
-asgn:		name ASSIGNMENT exp	{ emit("ASGN(%d)", $2); }
+asgn_exp:	name ASSIGNMENT exp	{ emit("ASGN(%d)", $2); }
 	;
 
 /* if statements */
@@ -148,7 +158,8 @@ hash_key:	name
 	;
 
 /* function call */
-func_call:	name '(' arg_list ')'	{ emit("FUNC CALL(%s)", name); }
+func_call:	name '(' arg_list ')'	{ emit("FUNC CALL(%s)", $1); }
+	|	block '(' arg_list ')'	{ emit("FUNC CALL(NAKED BLOCK)"); }
 	;
 
 arg_list:	exp		{ emit("AS ARG"); }
@@ -169,7 +180,8 @@ arith_exp:	exp '+' exp	{ emit("ARITH(+)"); }
 	;
 
 /* logical expression */
-logi_exp:	exp COMPARISON exp	{ emit("LOGI(comp %d)", $2); }
+logi_exp:	exp RELATION exp	{ emit("LOGI(rel %d)", $2); }
+	|	exp EQUALITY exp	{ emit("LOGI(equ %d)", $2); }
 	|	'!' exp			{ emit("LOGI(not)"); }
 	|	exp LOGIAND exp		{ emit("LOGI(and)"); }
 	|	exp LOGIOR exp		{ emit("LOGI(or)"); }
@@ -200,6 +212,9 @@ scalar:		name
 	|	string
 	|	number
 	|	block
+	;
+
+name:		NAME		{ emit("TOKNAME(%s)", $1); $$ = $1 }
 	;
 
 
