@@ -191,3 +191,75 @@ mkcode(struct cs_bt *code, struct cs_bt *nextstmt)
 }
 
 
+void
+free_tree(struct cs_bt *tree)
+{
+	if (tree == NULL)
+		return;
+
+	switch (tree->nodetype) {
+	case 'i': case 'f': break;
+	case 's': case 't':
+		free((struct cs_str *)tree->str);
+		break;
+	case '=':
+		freetree(((struct cs_asgn *)tree)->lhs);
+		freetree(((struct cs_asgn *)tree)->rhs);
+		break;
+	case '+':
+		freetree(((struct cs_bin *)tree)->lhs);
+		freetree(((struct cs_bin *)tree)->rhs);
+		break;
+	case '-':
+		freetree(((struct cs_unary *)tree)->operand);
+		break;
+	case '?':
+		freetree(((struct cs_tern *)tree)->op1);
+		freetree(((struct cs_tern *)tree)->op2);
+		freetree(((struct cs_tern *)tree)->op3);
+		break;
+	case 'a':
+		freetree(((struct cs_symlst *)tree)->name);
+		freetree(((struct cs_symlst *)tree)->next);
+		break;
+	case 'e':
+		freetree(((struct cs_explst *)tree)->item);
+		freetree(((struct cs_explst *)tree)->next);
+		break;
+	case 'I':
+		freetree(((struct cs_if *)tree)->cond);
+		freetree(((struct cs_if *)tree)->if_part);
+		freetree(((struct cs_if *)tree)->else_part);
+		break;
+	case 'W':
+		freetree(((struct cs_while *)tree)->cond);
+		freetree(((struct cs_while *)tree)->loop);
+		break;
+	case 'l':
+		freetree(((struct cs_list *)tree)->content);
+		break;
+	case 'h':
+		/* TODO */break;
+	case 'S':
+		freetree(((struct cs_stmt *)tree)->stmt);
+		break;
+	case 'B':
+		freetype(((struct cs_block *)tree)->code);
+		break;
+	case 'C':
+		freetype(((struct cs_code *)tree)->stmt);
+		freetype(((struct cs_code *)tree)->next);
+		break;
+	default:
+		cscript_error("unkown type (%d)[%c].",
+			      tree->nodetype, tree->nodetype);
+	}
+	free(tree);
+}
+
+void
+print_tree(struct cs_bt *tree)
+{
+	/* TODO: print whole tree */
+	return;
+}

@@ -197,6 +197,13 @@ mkblock(struct cs_bt *code_block);
 struct cs_bt *
 mkcode(struct cs_bt *code, struct cs_bt *nextstmt);
 
-/**/
+/* deallocate functions */
+void
+free_tree(struct cs_bt *tree);
+
+
+/* debug interface */
+void
+print_tree(struct cs_bt *tree);
 
 #endif /* _cscript_parser_h_ */
