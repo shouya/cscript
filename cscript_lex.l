@@ -38,12 +38,12 @@ int oldstate;
 "*="			{ yylval.intval = 3; return ASSIGNMENT; }
 "/="			{ yylval.intval = 4; return ASSIGNMENT; }
 
-"<"			{ yylval.intval = 3; return RELATION; }
-">"			{ yylval.intval = 4; return RELATION; }
-"<="			{ yylval.intval = 5; return RELATION; }
-">="			{ yylval.intval = 6; return RELATION; }
-"=="			{ yylval.intval = 1; return EQUALITY; }
-"!="			{ yylval.intval = 2; return EQUALITY; }
+"<"			{ yylval.intval = '<'; return RELATION; }
+">"			{ yylval.intval = '>'; return RELATION; }
+"<="			{ yylval.intval = 'L'; return RELATION; }
+">="			{ yylval.intval = 'G'; return RELATION; }
+"=="			{ yylval.intval = '='; return EQUALITY; }
+"!="			{ yylval.intval = '!'; return EQUALITY; }
 
 "if"			{ return IF; }
 "else"			{ return ELSE; }
@@ -63,8 +63,8 @@ int oldstate;
 "--"			{ return DECREASE; }
 "&&"			{ return LOGIAND; }
 "||"			{ return LOGIOR; }
-"<<"			{ yylval.intval = 1; return SHIFT; }
-">>"			{ yylval.intval = 2; return SHIFT; }
+"<<"			{ yylval.intval = 'l'; return SHIFT; }
+">>"			{ yylval.intval = 'r'; return SHIFT; }
 
 "+" |
 "-" |

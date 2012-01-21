@@ -84,6 +84,17 @@ struct cs_bt *
 mkasgn(int assignment, struct cs_bt *lhs, struct cs_bt *rhs)
 {
 	SETUP(a, cs_asgn, '=');
+	switch (assignment) {
+	case 1:
+		rhs = mkbin(CS_BIN_PLU, lhs, rhs);break;
+	case 2:
+		rhs = mkbin(CS_BIN_MIN, lhs, rhs);break;
+	case 3:
+		rhs = mkbin(CS_BIN_MUL, lhs, rhs);break;
+	case 4:
+		rhs = mkbin(CS_BIN_DIV, lhs, rhs);break;
+	default:;
+	}
 	a->lhs = (struct cs_tok *)lhs;
 	a->rhs = rhs;
 	RET(a);
@@ -144,14 +155,47 @@ mkif(struct cs_bt *cond, struct cs_bt *if_part, struct cs_bt *else_part)
 }
 
 struct cs_bt *
+mkunless(struct cs_bt *cond, struct cs_bt *unless_part, struct cs_bt*else_part)
+{
+	SETUP(u, cs_if, 'I');
+	u->cond = mkunary(CS_UN_NOT, cond);
+	u->if_part = (struct cs_stmt *)if_part;
+	u->else_part = (struct cs_stmt *)else_part;
+	RET(u);
+}
+
+
+struct cs_bt *
 mkwhile(int mode, struct cs_bt* cond, struct cs_bt *loop_part)
 {
 	SETUP(w, cs_while, 'W');
         w->mode = mode;
 	w->cond = cond;
-	w->loop = (Struct cs_stmt *)loop_part;
+	w->loop = (struct cs_stmt *)loop_part;
 	RET(w);
 }
+
+struct cs_bt *
+mkfor(struct cs_bt *start, struct cs_bt *cond,
+      struct cs_bt *end, struct cs_bt *loop)
+{
+	SETUP(f, cs_for, 'F');
+	f->start = (struct cs_stmt *)start;
+	f->cond = cond;
+	f->end = (struct cs_stmt *)end;
+	f->loop = (struct cs_stmt *)loop;
+	RET(f);
+}
+struct cs_bt *
+mkforin(struct cs_bt *var, struct cs_bt *array, struct cs_bt *loop)
+{
+	SETUP(f, cs_forin, 'Q');
+	f->name = (struct cs_tok *)var;
+	f->list = (struct cs_list *)array;
+	f->loop = (struct cs_stmt *)loop;
+	RET(f);
+}
+
 struct cs_bt *
 mklist(struct cs_bt *exp_list)
 {
@@ -190,6 +234,14 @@ mkcode(struct cs_bt *code, struct cs_bt *nextstmt)
 	RET(c);
 }
 
+struct cs_bt *
+mkfcall(struct cs_bt *func, struct cs_bt *args)
+{
+	SETUP(f, cs_fcall, 'c');
+	f->func = func;
+	f->arg = (struct cs_explst *)args;
+	RET(f);
+}
 
 void
 free_tree(struct cs_bt *tree)
@@ -235,6 +287,17 @@ free_tree(struct cs_bt *tree)
 		freetree(((struct cs_while *)tree)->cond);
 		freetree(((struct cs_while *)tree)->loop);
 		break;
+	case 'F':
+		freetree(((struct cs_for *)tree)->start);
+		freetree(((struct cs_for *)tree)->end);
+		freetree(((struct cs_for *)tree)->cond);
+		freetree(((struct cs_for *)tree)->loop);
+		break;
+	case 'Q':
+		freetree(((struct cs_forin *)tree)->name);
+		freetree(((struct cs_forin *)tree)->list);
+		freetree(((struct cs_forin *)tree)->loop);
+		break;
 	case 'l':
 		freetree(((struct cs_list *)tree)->content);
 		break;
@@ -244,11 +307,15 @@ free_tree(struct cs_bt *tree)
 		freetree(((struct cs_stmt *)tree)->stmt);
 		break;
 	case 'B':
-		freetype(((struct cs_block *)tree)->code);
+		freetree(((struct cs_block *)tree)->code);
 		break;
 	case 'C':
-		freetype(((struct cs_code *)tree)->stmt);
-		freetype(((struct cs_code *)tree)->next);
+		freetree(((struct cs_code *)tree)->stmt);
+		freetree(((struct cs_code *)tree)->next);
+		break;
+	case 'c':
+		freetree(((struct cs_fcall *)tree)->func);
+		freetree(((struct cs_fcall *)tree)->arg);
 		break;
 	default:
 		cscript_error("unkown type (%d)[%c].",

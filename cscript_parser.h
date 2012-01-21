@@ -16,6 +16,8 @@ struct cs_symlst;
 struct cs_explst;
 struct cs_if;
 struct cs_while;
+struct cs_for;
+struct cs_forin;
 struct cs_list;
 struct cs_hash;
 struct cs_stmt;
@@ -55,25 +57,27 @@ struct cs_asgn {
 };
 
 /* arithmetic binary operation */
-#define CS_BIN_PLU 1
-#define CS_BIN_MIN 2
-#define CS_BIN_MUL 3
-#define CS_BIN_DIV 4
+#define CS_BIN_PLU '+'
+#define CS_BIN_MIN '-'
+#define CS_BIN_MUL '*'
+#define CS_BIN_DIV '/'
 /* bitwise binary operation */
-#define CS_BIN_BAND 5
-#define CS_BIN_BOR  6
-#define CS_BIN_BXOR 7
+#define CS_BIN_BAND '&'
+#define CS_BIN_BOR  '|'
+#define CS_BIN_BXOR '^'
+#define CS_BIN_LSHFT 'l'
+#define CS_BIN_RSHFT 'r'
 /* logical binary operation */
-#define CS_BIN_LAND 8
-#define CS_BIN_LOR  9
+#define CS_BIN_LAND 'A'
+#define CS_BIN_LOR  'O'
 /* equality operation */
-#define CS_BIN_EQ  10
-#define CS_BIN_NE  11
+#define CS_BIN_EQ  '='
+#define CS_BIN_NE  '!'
 /* retional operation */
-#define CS_BIN_LT  12
-#define CS_BIN_GT  13
-#define CS_BIN_LE  14
-#define CS_BIN_GE  15
+#define CS_BIN_LT  '<'
+#define CS_BIN_GT  '>'
+#define CS_BIN_LE  'L'
+#define CS_BIN_GE  'G'
 
 struct cs_bin {		/* binary operation */
 	int nodetype; /* + */
@@ -82,14 +86,14 @@ struct cs_bin {		/* binary operation */
 	struct cs_bt* rhs;
 };
 
-#define CS_UN_PLU 1
-#define CS_UN_MIN 2
-#define CS_UN_NOT 3
-#define CS_UN_REV 4
-#define CS_UN_INC_PRE 5
-#define CS_UN_INC_PST 6
-#define CS_UN_DEC_PRE 7
-#define CS_UN_DEC_PST 8
+#define CS_UN_PLU '+'
+#define CS_UN_MIN '-'
+#define CS_UN_NOT '!'
+#define CS_UN_REV '~'
+#define CS_UN_INC_PRE 'i'
+#define CS_UN_INC_PST 'I'
+#define CS_UN_DEC_PRE 'd'
+#define CS_UN_DEC_PST 'D'
 
 struct cs_unary {	/* unary operation */
 	int nodetype; /* - */
@@ -97,7 +101,7 @@ struct cs_unary {	/* unary operation */
 	struct cs_bt *operand;
 };
 
-#define CS_TERN_COND 1	/* ?: operator */
+#define CS_TERN_COND '?'	/* ?: operator */
 struct cs_tern {	/* ternary operation */
 	int nodetype; /* ? */
 	int type;
@@ -129,7 +133,21 @@ struct cs_if {		/* if statment */
 strct cs_while {
 	int nodetype; /* W */
 	int mode;
-	struct cs_bin *cond;
+	struct cs_bt *cond;
+	struct cs_stmt *loop;
+};
+
+strct cs_for {
+	int nodetype; /* F */
+	struct cs_stmt *start, *end;
+	struct cs_bt *cond;
+	struct cs_stmt *loop;
+};
+
+strct cs_forin {
+	int nodetype; /* Q */
+	struct cs_tok *name;
+	struct cs_bt *list;
 	struct cs_stmt *loop;
 };
 
@@ -159,6 +177,12 @@ struct cs_code {	/* statement list */
 	struct cs_code *next;
 };
 
+struct cs_fcall {
+	int nodetype; /* c */
+	struct cs_bt *func;
+	struct cs_explst *arg;
+};
+
 /* binary tree construction functions */
 struct cs_bt *
 mkbt(int nodetype, struct cs_bt *l, struct cs_bt *r);
@@ -185,7 +209,14 @@ mkexplst(struct cs_bt *lst, struct cs_bt *newitem);
 struct cs_bt *
 mkif(struct cs_bt *cond, struct cs_bt *if_part, struct cs_bt *else_part);
 struct cs_bt *
+mkunless(struct cs_bt *cond, struct cs_bt *unless_part, struct cs_bt*else_part);
+struct cs_bt *
 mkwhile(int mode, struct cs_bt* cond, struct cs_bt *loop_part);
+struct cs_bt *
+mkfor(struct cs_bt *start, struct cs_bt *cond,
+      struct cs_bt *end, struct cs_bt *loop);
+struct cs_bt *
+mkforin(struct cs_bt *var, struct cs_bt *list, struct cs_bt *loop);
 struct cs_bt *
 mklist(struct cs_bt *exp_list);
 struct cs_bt *
@@ -196,6 +227,8 @@ struct cs_bt *
 mkblock(struct cs_bt *code_block);
 struct cs_bt *
 mkcode(struct cs_bt *code, struct cs_bt *nextstmt);
+struct cs_bt *
+mkfcall(struct cs_bt *func, struct cs_bt *args);
 
 /* deallocate functions */
 void

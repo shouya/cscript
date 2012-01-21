@@ -3,6 +3,8 @@
 #include <stdlib.h>
 #include <stdarg.h>
 
+#include "cscript_parser.h"
+
 int emit(char *s, ...);
 void yyerror(char *s, ...);
 
@@ -14,6 +16,7 @@ extern int yylineno;
 	int intval;
 	double fltval;
 	char *strval;
+	struct cs_bt *btree;
 };
 
 /* type declaration */
@@ -34,8 +37,6 @@ extern int yylineno;
 /*     ++       --       &&      ||    */
 
 
-%type <strval> name string
-
 /* operator precedence (low->high) */
 
 %left COMMA
@@ -54,6 +55,18 @@ extern int yylineno;
 %right INC_PRE DEC_PRE '!' UMINUS UPLUS
 %left FUNC_CALL INC_POST DEC_POST '[' '(' '{'
 
+/* rugulation type definition */
+%type <btree> number string name
+%type <btree> asgn_exp
+%type <btree> block_stmt block stmt stmt_list
+%type <btree> if_stmt unless_stmt while_stmt for_stmt
+%type <btree> array array_list array_item
+%type <btree> func_call arg_list
+%type <btree> arith_exp logi_exp bit_exp cond_op_exp
+%type <btree> comma_exp comma_list
+%type <btree> exp_or_empty exp
+%type <btree> smpl_stmt stmt
+
 %%
 
 /* main regulation */
@@ -64,26 +77,26 @@ main_reg:	/* empty statement */
 
 
 /* block */
-block:	'{' stmt_list '}'	{ emit("AS BLOCK"); }
+block:	'{' stmt_list '}'	{ $$= mkblock($2); }
 	;
 
-stmt_list:
-	|	stmt
-	|	stmt_list stmt
+stmt_list:			{ $$= mkcode(NULL, NULL); }
+	|	stmt		{ $$= mkcode(NULL, $2); }
+	|	stmt_list stmt	{ $$= mkcode($1, $2); } 
 	;
 
-block_stmt:	block
-	|	stmt
+block_stmt:	block		{ $$= mkstmt($1); }
+	|	stmt		{ $$= $1; }
 	;
 
 
 
 /* literal */
-number:		INTNUM		{ emit("INT(%d)", $1); }
-	|	FLTNUM		{ emit("FLOAT(%g)", $1); }
+number:		INTNUM		{ $$= mkint($1); }
+	|	FLTNUM		{ $$= mkflt($1); }
 	;
 
-string:		STRING		{ emit("STR(%s)", $1); $$ = $1; }
+string:		STRING		{ $$= mkstr($1); }
 	;
 
 literal:	number
@@ -91,56 +104,54 @@ literal:	number
 	;
 
 /* assignment */
-asgn_exp:	name ASSIGNMENT exp	{ emit("ASGN(%d)", $2); }
+asgn_exp:	name ASSIGNMENT exp	{ $$= mkasgn($2, $1, $3); }
 	;
 
 /* if statements */
-if_stmt:	if_part				{ emit("IF STMT"); }
-	|	if_part else_part		{ emit("IF/ELSE STMT"); }
+if_stmt:	IF '(' exp ')' block_stmt	{ $$= mkif($3, $5, NULL); }
+	|	IF '(' exp ')' block_stmt ELSE block_stmt {
+		$$= mkif($3, $5, $7);
+		}
 	;
-
-if_part:	IF '(' exp ')' block_stmt	{ emit("AS IF PART"); }
-	;
-
-else_part:	ELSE block_stmt			{ emit("AS ELSE PART"); }
-	;
-
 
 
 /* unless statement */
-unless_stmt:	unless_part		{ emit("UNLESS STMT"); }
-	|	unless_part else_part	{ emit("UNLESS/ELSE STMT"); }
+unless_stmt:	UNLESS '(' exp ')' block_stmt	{ $$= mkunless($3, $5, NULL); }
+	|	UNLESS '(' exp ')' block_stmt ELSE block_stmt {
+		$$= mkunless($3, $5, $7);
+		}
 	;
-
-unless_part:	UNLESS '(' exp ')' block_stmt	{ emit("AS UNLESS PART"); }
-	;
-
 
 /* while */
-while_stmt:	WHILE '(' exp ')' block_stmt		{ emit("WHILE STMT"); }
-		DO block_stmt WHILE '(' exp ')' ';'	{ emit("DO_WH STMT"); }
+while_stmt:	WHILE '(' exp ')' block_stmt		{
+			$$= mkwhile(CS_WHILE, $3, $5);
+		}
+	|	DO block_stmt WHILE '(' exp ')' ';'	{
+			$$= mkwhile(CS_DO_WHILE, $5, $2);
+		}
 	;
 
 
 /* for */
-for_stmt:	FOR '(' for_args ')' block_stmt	{ emit("FOR STMT"); }
-	;
-
-for_args:	smpl_stmt ';' exp ';' smpl_stmt	{ emit("AS FOR_TYPICAL ARG"); }
-	|	name IN exp			{ emit("AS FOR_IN ARG"); }
+for_stmt:	FOR '(' smpl_stmt ';' exp ';' smpl_stmt ')' block_stmt	{
+			$$= mkfor($3, $5, $7, $9);
+		}
+	|	FOR '(' name IN exp ')' block_stmt {
+			$$= mkforin($3, $5, $7);
+		}
 	;
 
 
 /* array */
-array:		'[' array_list ']'	{ emit("AS LIST"); }
+array:		'[' array_list ']'	{ $$= mklist($2); }
 	;
 
-array_list:	array_item
-	|	array_list ',' array_item
-	|		{ emit("WITH NO ITEMS"); }
+array_list:				{ $$= mkexplst(NULL, NULL); }
+	|	array_item		{ $$= mkexplst(NULL, $1); }
+	|	array_list ',' array_item { $$= mkexplst($1, $2); }
 	;
 
-array_item:	exp	{ emit("AS LIST ITEM"); }
+array_item:	exp	{ $$= $1; }
 	;
 
 /* hash */
@@ -158,56 +169,58 @@ hash_key:	exp
 	;
 
 /* function call */
-func_call:	name '(' arg_list ')'	{ emit("FUNC CALL(%s)", $1); }
-	|	block '(' arg_list ')'	{ emit("FUNC CALL(NAKED BLOCK)"); }
+func_call:	name '(' arg_list ')'	{ $$= mkfcall($1, $3); }
+	|	block '(' arg_list ')'	{ $$= mkfcall($1, $3); }
 	;
 
-arg_list:			{ emit("WITH VOID ARG"); }
-	|	exp		{ emit("AS ARG"); }
-	|	arg_list exp	{ emit("AS ARG"); }
+arg_list:			{ $$= mkexplst(NULL, NULL); }
+	|	exp		{ $$= mkexplst(NULL, $1); }
+	|	arg_list ',' exp	{ $$= mkexplst($1, $3); }
 	;
 
 /* arithmetic expression */
-arith_exp:	exp '+' exp	{ emit("ARITH(+)"); }
-	|	exp '-' exp	{ emit("ARITH(-)"); }
-	|	exp '*' exp	{ emit("ARITH(*)"); }
-	|	exp '/' exp	{ emit("ARITH(/)"); }
-	|	INCREASE exp %prec INC_PRE	{ emit("ARITH(++ PRE)"); }
-	|	DECREASE exp %prec DEC_PRE	{ emit("ARITH(-- PRE)"); }
-	|	exp INCREASE %prec INC_POST	{ emit("ARITH(++ POST)"); }
-	|	exp DECREASE %prec DEC_POST	{ emit("ARITH(-- POST)"); }
-	|	'-' exp %prec UMINUS	{ emit("ARITH(UMINUS)"); }
-	|	'+' exp %prec UPLUS	{ emit("ARITH(UPLUS)"); }
+arith_exp:	exp '+' exp	{ $$= mkbin('+', $1, $3); }
+	|	exp '-' exp	{ $$= mkbin('-', $1, $3); }
+	|	exp '*' exp	{ $$= mkbin('*', $1, $3); }
+	|	exp '/' exp	{ $$= mkbin('/', $1, $3); }
+	|	INCREASE exp %prec INC_PRE	{ $$= mkunary('i', $2); }
+	|	DECREASE exp %prec DEC_PRE	{ $$= mkunary('d', $2); }
+	|	exp INCREASE %prec INC_POST	{ $$= mkunary('I', $1); }
+	|	exp DECREASE %prec DEC_POST	{ $$= mkunary('D', $1); }
+	|	'-'exp %prec UMINUS	{ $$= mkunary('-', $2); }
+	|	'+'exp %prec UPLUS	{ $$= mkunary('+', $2); }
 	;
 
 /* logical expression */
-logi_exp:	exp RELATION exp	{ emit("LOGI(rel %d)", $2); }
-	|	exp EQUALITY exp	{ emit("LOGI(equ %d)", $2); }
-	|	'!' exp			{ emit("LOGI(not)"); }
-	|	exp LOGIAND exp		{ emit("LOGI(and)"); }
-	|	exp LOGIOR exp		{ emit("LOGI(or)"); }
+logi_exp:	exp RELATION exp	{ $$= mkbin($2, $1, $3); }
+	|	exp EQUALITY exp	{ $$= mkbin($2, $1, $3); }
+	|	'!'exp			{ $$= mkunary('!', $2); }
+	|	exp LOGIAND exp		{ $$= mkbin('A', $1, $3); }
+	|	exp LOGIOR exp		{ $$= mkbin('O', $1, $3); }
 	;
 
 
 /* bitwise expression */
-bit_exp:	exp SHIFT exp		{ emit("BIT(shift %d)", $2); }
-	|	exp '&' exp		{ emit("BIT(and)"); }
-	|	exp '^' exp		{ emit("BIT(xor)"); }
-	|	exp '|' exp		{ emit("BIT(or)"); }
+bit_exp:	exp SHIFT exp		{ $$= mkbin($2, $1, $3); }
+	|	exp '&' exp		{ $$= mkbin('&', $1, $3); }
+	|	exp '^' exp		{ $$= mkbin('^', $1, $3); }
+	|	exp '|' exp		{ $$= mkbin('|', $1, $3); }
 	;
 
 /* cond_op expression */
-cond_op_exp:	exp '?' exp ':' exp %prec COND_OP	{ emit("COND_OP"); }
+cond_op_exp:	exp '?' exp ':' exp %prec COND_OP	{
+			$$= mktern('?', $1, $3, $5);
+		}
 	;
 
 /* comma expression */
-comma_exp:	'(' exp ',' comma_list ')' %prec COMMA	{
-	emit("AS COMMA EXPRESSION");
-}
+comma_exp:	'(' comma_list ',' exp ')' %prec COMMA	{
+			$$= mkexplst($2, $4);
+		}
 	;
 
-comma_list:	exp
-	|	comma_list ',' exp
+comma_list:	exp			{ $$= mkexplst(NULL, $1); }
+	|	comma_list ',' exp	{ $$= mkexplst($1, $2); }
 	;
 
 /* scalar/list/hash */
@@ -217,39 +230,39 @@ scalar:		name
 	|	block
 	;
 
-name:		NAME		{ emit("TOKNAME(%s)", $1); $$ = $1 }
+name:		NAME		{ $$= mktok($1); }
 	;
 
 
 /* expression */
-exp_or_empty:	/* nothing */
-	|	exp
+exp_or_empty:	/* nothing */	{ $$= NULL; }
+	|	exp		{ $$= $1; }
 	;
-exp:		name		{ emit("EXP NAME"); }
-	|	func_call	{ emit("EXP FUNCCALL"); }
-	|	asgn_exp	{ emit("EXP ASGN"); }
-	|	arith_exp	{ emit("EXP ARITH"); }
-	|	logi_exp	{ emit("EXP LOGI"); }
-	|	bit_exp		{ emit("EXP BIT"); }
-	|	cond_op_exp	{ emit("EXP COND_OP"); }
-	|	scalar		{ emit("EXP SCALAR"); }
-	|	array		{ emit("EXP ARRAY"); }
-	|	hash		{ emit("EXP HASH"); }
-	|	comma_exp	{ emit("EXP COMMA"); }
-	|	'(' exp ')'	{ emit("EXP PRIO"); }
+exp:		name		{ $$= $1; }
+	|	func_call	{ $$= $1; }
+	|	asgn_exp	{ $$= $1; }
+	|	arith_exp	{ $$= $1; }
+	|	logi_exp	{ $$= $1; }
+	|	bit_exp		{ $$= $1; }
+	|	cond_op_exp	{ $$= $1; }
+	|	scalar		{ $$= $1; }
+	|	array		{ $$= $1; }
+	|	hash		{ $$= $1; }
+	|	comma_exp	{ $$= $1; }
+	|	'(' exp ')'	{ $$= $2; }
 	;
 
 
 
 /* statement */
-smpl_stmt:	exp	{ emit("EXP_STMT"); }
+smpl_stmt:	exp	{ $$= mkstmt($1); }
 	;
-stmt:		';'	{ emit("NOP"); }
-	|	smpl_stmt ';'
-	|	if_stmt
-	|	unless_stmt
-	|	while_stmt
-	|	for_stmt
+stmt:		';'	{ $$= mkstmt(NULL); }
+	|	smpl_stmt ';'	{ $$= $1; }
+	|	if_stmt		{ $$= mkstmt($1); }
+	|	unless_stmt	{ $$= mkstmt($1); }
+	|	while_stmt	{ $$= mkstmt($1); }
+	|	for_stmt	{ $$= mkstmt($1); }
 	;
 
 %%
