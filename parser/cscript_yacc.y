@@ -152,9 +152,7 @@ hash_list:	hash_item
 hash_item:	hash_key ':' exp
 	;
 
-hash_key:	name
-	|	string
-	|	number
+hash_key:	exp
 	;
 
 /* function call */
