@@ -1,0 +1,17 @@
+# -*- org -*-
+
+|--------+----------+-----------+----------+-------------------------|
+| name   | typechar | structure | function | comment                 |
+|--------+----------+-----------+----------+-------------------------|
+| int    | i        | cs_int    | mkint    |                         |
+| flt    | f        | cs_flt    | mkflt    |                         |
+| str    | s        | cs_str    | mkstr    |                         |
+| tok    | t        | cs_tok    | mktok    |                         |
+| asgn   | \=       | cs_asgn   | mkasgn   | assignment              |
+| bin    | +        | cs_bin    | mkbin    | simple binary operation |
+| unary  | -        | cs_unary  | mkunary  | simple unary operation  |
+| tern   | ?        | cs_tern   | mktern   | ternary                 |
+| symlst | a        | cs_symlst | mksymlst | symbol list             |
+| explst | e        | cs_explst | mkexplst | expression list         |
+|        |          |           |          |                         |
+|--------+----------+-----------+----------+-------------------------|

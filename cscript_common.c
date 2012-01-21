@@ -1,4 +1,4 @@
-#include "cscript_common.c"
+#include "cscript_common.h"
 
 FILE* cscript_outfile;
 

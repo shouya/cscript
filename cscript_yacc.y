@@ -5,6 +5,9 @@
 
 int emit(char *s, ...);
 void yyerror(char *s, ...);
+
+
+extern int yylineno;
 %}
 
 %union {
@@ -49,16 +52,23 @@ void yyerror(char *s, ...);
 %left '+' '-'
 %left '*' '/' '%'
 %right INC_PRE DEC_PRE '!' UMINUS UPLUS
-%left FUNC_CALL INC_POST DEC_POST
+%left FUNC_CALL INC_POST DEC_POST '[' '(' '{'
 
 %%
+
+/* main regulation */
+main_reg:	/* empty statement */
+	|	stmt
+	|	main_reg stmt;
+	;
 
 
 /* block */
 block:	'{' stmt_list '}'	{ emit("AS BLOCK"); }
 	;
 
-stmt_list:	stmt
+stmt_list:
+	|	stmt
 	|	stmt_list stmt
 	;
 
@@ -130,15 +140,15 @@ for_args:	smpl_stmt ';' exp ';' smpl_stmt	{ emit("AS FOR_TYPICAL ARG"); }
 
 
 /* array */
-array:		'[' array_list ']'
-	|	'[' ']'
+array:		'[' array_list ']'	{ emit("AS LIST"); }
 	;
 
 array_list:	array_item
 	|	array_list ',' array_item
+	|		{ emit("WITH NO ITEMS"); }
 	;
 
-array_item:	exp
+array_item:	exp	{ emit("AS LIST ITEM"); }
 	;
 
 /* hash */
@@ -160,7 +170,8 @@ func_call:	name '(' arg_list ')'	{ emit("FUNC CALL(%s)", $1); }
 	|	block '(' arg_list ')'	{ emit("FUNC CALL(NAKED BLOCK)"); }
 	;
 
-arg_list:	exp		{ emit("AS ARG"); }
+arg_list:			{ emit("WITH VOID ARG"); }
+	|	exp		{ emit("AS ARG"); }
 	|	arg_list exp	{ emit("AS ARG"); }
 	;
 
@@ -198,7 +209,9 @@ cond_op_exp:	exp '?' exp ':' exp %prec COND_OP	{ emit("COND_OP"); }
 	;
 
 /* comma expression */
-comma_exp:	exp ',' comma_list	{ emit("AS COMMA EXPRESSION"); }
+comma_exp:	'(' exp ',' comma_list ')' %prec COMMA	{
+	emit("AS COMMA EXPRESSION");
+}
 	;
 
 comma_list:	exp
@@ -227,16 +240,15 @@ exp:		name		{ emit("EXP NAME"); }
 	|	logi_exp	{ emit("EXP LOGI"); }
 	|	bit_exp		{ emit("EXP BIT"); }
 	|	cond_op_exp	{ emit("EXP COND_OP"); }
-	|	comma_exp	{ emit("EXP COMMA"); }
 	|	scalar		{ emit("EXP SCALAR"); }
 	|	array		{ emit("EXP ARRAY"); }
 	|	hash		{ emit("EXP HASH"); }
+	|	comma_exp	{ emit("EXP COMMA"); }
+	|	'(' exp ')'	{ emit("EXP PRIO"); }
 	;
 
-exp:		
-	;
 
-useless:;
+
 /* statement */
 smpl_stmt:	exp	{ emit("EXP_STMT"); }
 	;
@@ -269,7 +281,7 @@ void yyerror(char *s, ...)
     va_list ap;
     va_start(ap, s);
 
-    fprintf(stderr, "Error: ");
+    fprintf(stderr, "Error[%d]: ", yylineno);
     vfprintf(stderr, s, ap);
     fprintf(stderr, "\n");
 

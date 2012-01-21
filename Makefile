@@ -2,7 +2,7 @@ CC = gcc
 LEX = flex
 YACC = bison
 
-C_SRC = $(wildcard *.c)
+C_SRC =  # $(wildcard *.c)
 
 LEX_SRC = $(wildcard *.l)
 YACC_SRC = $(wildcard *.y)

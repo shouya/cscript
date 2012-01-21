@@ -14,7 +14,7 @@ int oldstate;
 
 %%
 
-[1-9]* |
+[1-9]+ |
 0[0-7]* |
 0[xX][0-9a-fA-F]*	{ yylval.intval = atoi(yytext); return INTNUM; }
 
@@ -28,9 +28,15 @@ int oldstate;
 	return STRING;
 }
 
-true			{ yylval.intval = 1; return BOOL; }
-false			{ yylval.intval = 0; return BOOL; }
-undef			{ yylval.intval = -1; return BOOL; }
+"true"			{ yylval.intval = 1; return BOOL; }
+"false"			{ yylval.intval = 0; return BOOL; }
+"undef"			{ yylval.intval = -1; return BOOL; }
+
+"="			{ yylval.intval = 0; return ASSIGNMENT; }
+"+="			{ yylval.intval = 1; return ASSIGNMENT; }
+"-="			{ yylval.intval = 2; return ASSIGNMENT; }
+"*="			{ yylval.intval = 3; return ASSIGNMENT; }
+"/="			{ yylval.intval = 4; return ASSIGNMENT; }
 
 "<"			{ yylval.intval = 3; return RELATION; }
 ">"			{ yylval.intval = 4; return RELATION; }
@@ -38,12 +44,6 @@ undef			{ yylval.intval = -1; return BOOL; }
 ">="			{ yylval.intval = 6; return RELATION; }
 "=="			{ yylval.intval = 1; return EQUALITY; }
 "!="			{ yylval.intval = 2; return EQUALITY; }
-
-"="			{ yylval.intval = 0; return ASSIGNMENT; }
-"+="			{ yylval.intval = 1; return ASSIGNMENT; }
-"-="			{ yylval.intval = 2; return ASSIGNMENT; }
-"*="			{ yylval.intval = 3; return ASSIGNMENT; }
-"/="			{ yylval.intval = 4; return ASSIGNMENT; }
 
 "if"			{ return IF; }
 "elsif"			{ return ELSIF; }
