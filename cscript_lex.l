@@ -46,7 +46,6 @@ int oldstate;
 "!="			{ yylval.intval = 2; return EQUALITY; }
 
 "if"			{ return IF; }
-"elsif"			{ return ELSIF; }
 "else"			{ return ELSE; }
 "while"			{ return WHILE; }
 "for"			{ return FOR; }

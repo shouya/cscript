@@ -27,7 +27,7 @@ extern int yylineno;
 %token <intval> BOOL
 
 /* key word */
-%token IF ELSE ELSIF UNLESS WHILE FOR DO RETURN IMPORT IN
+%token IF ELSE UNLESS WHILE FOR DO RETURN IMPORT IN
 
 /* operator */
 %token INCREASE DECREASE LOGIAND LOGIOR
@@ -97,8 +97,6 @@ asgn_exp:	name ASSIGNMENT exp	{ emit("ASGN(%d)", $2); }
 /* if statements */
 if_stmt:	if_part				{ emit("IF STMT"); }
 	|	if_part else_part		{ emit("IF/ELSE STMT"); }
-	|	if_part elsif_parts		{ emit("IF/ELSIF STMT"); }
-	|	if_part elsif_parts else_part	{ emit("IF/ELSIF/ELSE STMT"); }
 	;
 
 if_part:	IF '(' exp ')' block_stmt	{ emit("AS IF PART"); }
@@ -107,12 +105,6 @@ if_part:	IF '(' exp ')' block_stmt	{ emit("AS IF PART"); }
 else_part:	ELSE block_stmt			{ emit("AS ELSE PART"); }
 	;
 
-elsif_part:	ELSIF '(' exp ')' block_stmt	{ emit("AS ELSIF PART"); }
-	;
-
-elsif_parts:	elsif_part
-	|	elsif_parts elsif_part
-	;
 
 
 /* unless statement */

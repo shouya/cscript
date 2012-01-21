@@ -1,17 +1,25 @@
 # -*- org -*-
 
-|--------+----------+-----------+----------+-------------------------|
-| name   | typechar | structure | function | comment                 |
-|--------+----------+-----------+----------+-------------------------|
-| int    | i        | cs_int    | mkint    |                         |
-| flt    | f        | cs_flt    | mkflt    |                         |
-| str    | s        | cs_str    | mkstr    |                         |
-| tok    | t        | cs_tok    | mktok    |                         |
-| asgn   | \=       | cs_asgn   | mkasgn   | assignment              |
-| bin    | +        | cs_bin    | mkbin    | simple binary operation |
-| unary  | -        | cs_unary  | mkunary  | simple unary operation  |
-| tern   | ?        | cs_tern   | mktern   | ternary                 |
-| symlst | a        | cs_symlst | mksymlst | symbol list             |
-| explst | e        | cs_explst | mkexplst | expression list         |
-|        |          |           |          |                         |
-|--------+----------+-----------+----------+-------------------------|
+|--------+----------+-----------+-----------+-------------------------|
+| name   | typechar | structure | function  | comment                 |
+|--------+----------+-----------+-----------+-------------------------|
+| bt     | -----    | cs_bt     | mkbt      | basic binary tree       |
+| int    | i        | cs_int    | mkint     |                         |
+| flt    | f        | cs_flt    | mkflt     |                         |
+| str    | s        | cs_str    | mkstr     |                         |
+| tok    | t        | cs_tok    | mktok     | token                   |
+| asgn   | \=       | cs_asgn   | mkasgn    | assignment              |
+| bin    | +        | cs_bin    | mkbin     | simple binary operation |
+| unary  | -        | cs_unary  | mkunary   | simple unary operation  |
+| tern   | ?        | cs_tern   | mktern    | ternary                 |
+| symlst | a        | cs_symlst | mksymlst  | symbol list             |
+| explst | e        | cs_explst | mkexplst  | expression list         |
+| if     | I        | cs_if     | mkif      | if statment             |
+| while  | W        | cs_while  | mkwhile   | while statment          |
+| list   | l        | cs_list   | mklist    | a list with elements    |
+| hash   | h        | cs_hash   | mkhash    | a hash table (todo)     |
+| stmt   | S        | cs_stmt   | mkstmt    | a complete statement    |
+| block  | B        | cs_block  | mkblock   | a code block            |
+| code   | C        | cs_code   | mkcode    | statments list          |
+| -- TO  | -- BE -- | -- CON -- | -- TIN -- | ---------- UE --------- |
+|--------+----------+-----------+-----------+-------------------------|

@@ -2,6 +2,27 @@
 #ifndef _cscript_parser_h_
 #define _cscript_parser_h_
 
+/* structure declaratioins */
+struct cs_bt;
+struct cs_int;
+struct cs_flt;
+struct cs_str;
+struct cs_tok;
+struct cs_asgn;
+struct cs_bin;
+struct cs_unary;
+struct cs_tern;
+struct cs_symlst;
+struct cs_explst;
+struct cs_if;
+struct cs_while;
+struct cs_list;
+struct cs_hash;
+struct cs_stmt;
+struct cs_block;
+struct cs_code;
+
+/* structure definitions */
 struct cs_bt {		/* basic binary tree */
 	int nodetype;
 	struct cs_bt *l, *r;
@@ -96,16 +117,51 @@ struct cs_explst {	/* expression list */
 	struct cs_explst *next;
 };
 
-struct cs_if {
+struct cs_if {		/* if statment */
 	int nodetype; /* I */
-	struct cs_bin *cond;
-	struct cs_bin *if_part;
-	struct cs_bin *else_part;
+	struct cs_bt *cond;
+	struct cs_stmt *if_part;
+	struct cs_stmt *else_part;
 };
 
-/* */
+#define CS_DO_WHILE 1
+#define CS_WHILE    2
+strct cs_while {
+	int nodetype; /* W */
+	int mode;
+	struct cs_bin *cond;
+	struct cs_stmt *loop;
+};
+
+struct cs_list { /* list */
+	int nodetype; /* l */
+	struct cs_explst *content;
+};
+
+struct cs_hash {
+	int nodetype; /* h */
+	/* TODO */
+};
+
+struct cs_stmt {	/* statement */
+	int nodetype; /* S */
+	struct cs_bin *stmt;
+};
+
+struct cs_block {
+	int nodetype; /* B */
+	struct cs_code *code;
+};
+
+struct cs_code {	/* statement list */
+	int nodetype; /* C */
+	struct cs_stmt *stmt;
+	struct cs_code *next;
+};
+
+/* binary tree construction functions */
 struct cs_bt *
-mkbty(int nodetype, struct cs_bt *l, struct cs_bt *r);
+mkbt(int nodetype, struct cs_bt *l, struct cs_bt *r);
 struct cs_bt *
 mkint(long val);
 struct cs_bt *
@@ -126,7 +182,21 @@ struct cs_bt *
 mksymlst(struct cs_bt *lst, struct cs_bt *newitem);
 struct cs_bt *
 mkexplst(struct cs_bt *lst, struct cs_bt *newitem);
+struct cs_bt *
+mkif(struct cs_bt *cond, struct cs_bt *if_part, struct cs_bt *else_part);
+struct cs_bt *
+mkwhile(int mode, struct cs_bt* cond, struct cs_bt *loop_part);
+struct cs_bt *
+mklist(struct cs_bt *exp_list);
+struct cs_bt *
+mkhash(void); /* INCOMPLETED */
+struct cs_bt *
+mkstmt(struct cs_bt *exp);
+struct cs_bt *
+mkblock(struct cs_bt *code_block);
+struct cs_bt *
+mkcode(struct cs_bt *code, struct cs_bt *nextstmt);
 
-
+/**/
 
 #endif /* _cscript_parser_h_ */
