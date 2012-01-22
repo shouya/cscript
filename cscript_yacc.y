@@ -8,6 +8,7 @@
 int emit(char *s, ...);
 void yyerror(char *s, ...);
 
+extern int yylex(void);
 
 extern int yylineno;
 %}
@@ -56,15 +57,14 @@ extern int yylineno;
 %left FUNC_CALL INC_POST DEC_POST '[' '(' '{'
 
 /* rugulation type definition */
-%type <btree> number string name
-%type <btree> asgn_exp
-%type <btree> block_stmt block stmt stmt_list
+%type <btree> number string name scalar
+%type <btree> block_stmt block stmt_list
 %type <btree> if_stmt unless_stmt while_stmt for_stmt
-%type <btree> array array_list array_item
+%type <btree> array array_list array_item /**/ hash
 %type <btree> func_call arg_list
-%type <btree> arith_exp logi_exp bit_exp cond_op_exp
+%type <btree> asgn_exp arith_exp logi_exp bit_exp cond_op_exp
 %type <btree> comma_exp comma_list
-%type <btree> exp_or_empty exp
+%type <btree> exp
 %type <btree> smpl_stmt stmt
 
 %%
@@ -81,7 +81,7 @@ block:	'{' stmt_list '}'	{ $$= mkblock($2); }
 	;
 
 stmt_list:			{ $$= mkcode(NULL, NULL); }
-	|	stmt		{ $$= mkcode(NULL, $2); }
+	|	stmt		{ $$= mkcode(NULL, $1); }
 	|	stmt_list stmt	{ $$= mkcode($1, $2); } 
 	;
 
@@ -97,10 +97,6 @@ number:		INTNUM		{ $$= mkint($1); }
 	;
 
 string:		STRING		{ $$= mkstr($1); }
-	;
-
-literal:	number
-	|	string
 	;
 
 /* assignment */
@@ -148,14 +144,14 @@ array:		'[' array_list ']'	{ $$= mklist($2); }
 
 array_list:				{ $$= mkexplst(NULL, NULL); }
 	|	array_item		{ $$= mkexplst(NULL, $1); }
-	|	array_list ',' array_item { $$= mkexplst($1, $2); }
+	|	array_list ',' array_item { $$= mkexplst($1, $3); }
 	;
 
 array_item:	exp	{ $$= $1; }
 	;
 
 /* hash */
-hash:		'[' hash_list ']'
+hash:		'[' hash_list ']'	{ $$= mkhash(); /*TODO*/ }
 	;
 
 hash_list:	hash_item
@@ -220,14 +216,14 @@ comma_exp:	'(' comma_list ',' exp ')' %prec COMMA	{
 	;
 
 comma_list:	exp			{ $$= mkexplst(NULL, $1); }
-	|	comma_list ',' exp	{ $$= mkexplst($1, $2); }
+	|	comma_list ',' exp	{ $$= mkexplst($1, $3); }
 	;
 
 /* scalar/list/hash */
-scalar:		name
-	|	string
-	|	number
-	|	block
+scalar:		name		{ $$= $1; }
+	|	string		{ $$= $1; }
+	|	number		{ $$= $1; }
+	|	block		{ $$= $1; }
 	;
 
 name:		NAME		{ $$= mktok($1); }
@@ -235,11 +231,7 @@ name:		NAME		{ $$= mktok($1); }
 
 
 /* expression */
-exp_or_empty:	/* nothing */	{ $$= NULL; }
-	|	exp		{ $$= $1; }
-	;
-exp:		name		{ $$= $1; }
-	|	func_call	{ $$= $1; }
+exp:		func_call	{ $$= $1; }
 	|	asgn_exp	{ $$= $1; }
 	|	arith_exp	{ $$= $1; }
 	|	logi_exp	{ $$= $1; }
@@ -299,5 +291,7 @@ int main()
 	printf("cscript parse worked.\n");
     else
 	printf("cscript parse failed.\n");
+
+    return 0;
 }
 

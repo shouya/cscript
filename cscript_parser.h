@@ -130,21 +130,21 @@ struct cs_if {		/* if statment */
 
 #define CS_DO_WHILE 1
 #define CS_WHILE    2
-strct cs_while {
+struct cs_while {
 	int nodetype; /* W */
 	int mode;
 	struct cs_bt *cond;
 	struct cs_stmt *loop;
 };
 
-strct cs_for {
+struct cs_for {
 	int nodetype; /* F */
 	struct cs_stmt *start, *end;
 	struct cs_bt *cond;
 	struct cs_stmt *loop;
 };
 
-strct cs_forin {
+struct cs_forin {
 	int nodetype; /* Q */
 	struct cs_tok *name;
 	struct cs_bt *list;

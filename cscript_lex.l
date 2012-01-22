@@ -6,6 +6,8 @@
 #include "cscript_yacc.tab.h"
 
 extern void yyerror(char *s, ...);
+extern int fileno(FILE *stream);
+extern char *strdup(const char *s);
 
 int oldstate;
 %}
@@ -24,7 +26,7 @@ int oldstate;
 \'([^\']|\\[nt\'])*\' |
 \"([^\"]|\\[nt\"])*\"	{
 	yytext[yyleng - 1] = '\0';
-	yylval.strval = strdup((char*)yytext + 1);
+	yylval.strval = (char*)strdup((char*)yytext + 1);
 	return STRING;
 }
 
@@ -87,9 +89,12 @@ int oldstate;
 "|" |
 "^"			{ return *yytext; }
 
-[a-zA-Z_][0-9a-zA-Z]*	{ yylval.strval = strdup(yytext); return NAME; }
+[a-zA-Z_][0-9a-zA-Z]*	{ yylval.strval = (char*)strdup(yytext); return NAME; }
 
 [ \t\n]			{ /* ignore whitespaces */ }
 
+
 .			{ yyerror("mystery character: [%c](%d)",
-				  *yytext, *yytext); }
+				  *yytext, *yytext);
+	/* the following code are used to ignore some gcc `unused' warning. */
+	void *a = &yyunput; a = &input; ++a; }
