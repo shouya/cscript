@@ -24,5 +24,9 @@
 | block  | B        | cs_block  | mkblock       | a code block            |
 | code   | C        | cs_code   | mkcode        | statments list          |
 | fcall  | c        | cs_fcall  | mkfcall       | function calling        |
-| -- TO  | -- BE -- | -- CON -- | -- TIN --     | ---------- UE --------- |
+|--------+----------+-----------+---------------+-------------------------|
+|        |          |           |               | the following types are |
+|        |          |           |               | runtime types           |
+|--------+----------+-----------+---------------+-------------------------|
+| var    | v        | cs_var    | mkvar         | variable                |
 |--------+----------+-----------+---------------+-------------------------|

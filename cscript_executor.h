@@ -2,14 +2,44 @@
 #ifndef _cscript_executor_h_
 #define _cscript_executor_h_
 
+#define CS_VAR_FLAG_TMP 0x1
+
+#define CS_VAR_STR 's'
+#define CS_VAR_INT 'i'
+#define CS_VAR_FLT 'f'
+#define CS_VAR_FUN 'F'
+#define CS_VAR_ARY 'a'
+#define CS_VAR_HSH 'h' /* TODO: Hash table */
+#define CS_VAR_GLB 'g' /* TODO: Typeglob */
+
 struct cs_var {
 	int nodetype;
 	int type;
-	void *var;
+	char *name;
+	long flags;
+	union val {
+		int i;
+		char *s;
+		double f;
+		dtl_arr *a; /* the code here like a stairway :) */
+		/* TODO: dtl_fun *F; */
+		/* TODO: dtl_hsh *h; */
+		/* TODO: dtl_glb *g; */
+	};
 };
 
-int treeresolve(struct cse_tree *tree);
-int treeexec(struct cse_tree *tree);
+struct cs_var *
+mkvar(int type, const char *name, long flags, ...);
+
+
+/* evaluate functions */
+struct cs_bt *
+eval_tree(struct cs_bt *tree, struct cscript_runstack *rs);
+
+struct cs_bt *
+eval_asgn(struct cs_bt *asgnmt, struct cscript_runstack *rs);
+struct cs_bt *
+eval_bin(struct cs_bt *bin, struct cscript_runstack *rs);
 
 
 

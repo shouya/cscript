@@ -2,29 +2,6 @@
 #ifndef _cscript_resolver_h_
 #define _cscript_resolver_h_
 
-#define VAR_STR 's'
-#define VAR_INT 'i'
-#define VAR_FLT 'f'
-#define VAR_FUN 'F'
-#define VAR_ARY 'a'
-#define VAR_HSH 'h' /* TODO: Hash table */
-#define VAR_GLB 'g' /* TODO: Typeglob */
-
-struct cs_var {
-	char *name;
-	int type;
-	long flag;
-	union val {
-		int i;
-		char *s;
-		double f;
-		dtl_arr *a; /* the code here like a stairway :) */
-		/* TODO: dtl_fun *F; */
-		/* TODO: dtl_hsh *h; */
-		/* TODO: dtl_glb *g; */
-	};
-	int ref;
-};
 
 
 /*
@@ -53,7 +30,6 @@ struct cs_var {
 
   a = [1, 2, 3];  // as this the `a' is an array, so it can be reference
  */
-
 
 
 
