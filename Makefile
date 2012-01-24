@@ -43,3 +43,8 @@ clean:
 
 rebuild: clean all
 
+
+# This rugulation only use for doing unit testing 
+.PHONY : test
+test:
+	gcc -Wall cscript_test.c cscript_htbl.c -o test
