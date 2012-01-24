@@ -2,6 +2,59 @@
 #ifndef _cscript_resolver_h_
 #define _cscript_resolver_h_
 
-struct 
+#define VAR_STR 's'
+#define VAR_INT 'i'
+#define VAR_FLT 'f'
+#define VAR_FUN 'F'
+#define VAR_ARY 'a'
+#define VAR_HSH 'h' /* TODO: Hash table */
+#define VAR_GLB 'g' /* TODO: Typeglob */
+
+struct cs_var {
+	char *name;
+	int type;
+	long flag;
+	union val {
+		int i;
+		char *s;
+		double f;
+		dtl_arr *a; /* the code here like a stairway :) */
+		/* TODO: dtl_fun *F; */
+		/* TODO: dtl_hsh *h; */
+		/* TODO: dtl_glb *g; */
+	};
+	int ref;
+};
+
+
+/*
+  Regulation:
+
+  When executed to an variable declaration, the resolver will construct a new
+  variable on memory, using type `struct cs_var', then create a reference to
+  pointer to it, the reference has name but the variable didn't, and once re-
+  fered will increase the reference-count of variable(the `ref' member) will
+  increase 1, when a reference disabled, the reference count of variable will
+  decrease 1. If the reference count becomes 0, that means the variable is
+  merely, and can free it safely.
+
+  Like:
+  a = 1;   // create a int variable and store `1' inside, then refer it
+           // as name `a'  (ref-count is 1)
+  del a;   // delete the reference and decrease the reference count of variable
+           // ref-count is 0 now
+           // then free the variable automically.
+
+  If there are more reference refered one variable, like:
+  a = 1;
+  b = a;   // the variable `1' is not a reference-type, but a value-type
+           // so this operation will create a duplication of the variable but
+	   // not a reference.
+
+  a = [1, 2, 3];  // as this the `a' is an array, so it can be reference
+ */
+
+
+
 
 #endif /* _cscript_resolver_h_ */
