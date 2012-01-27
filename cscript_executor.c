@@ -280,7 +280,11 @@ DEC_BIN(ne)
 	return NULL;
 }
 
-DEC_BIN(lt);
+DEC_BIN(lt)
+{
+
+}
+
 DEC_BIN(gt);
 DEC_BIN(le);
 DEC_BIN(ge);
