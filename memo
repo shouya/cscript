@@ -1,0 +1,22 @@
+# -*- org -*-
+
+* operators [11/15]:
+ * [ ] %left COMMA
+ * [X] %right ASSIGNMENT
+ * [ ] %right COND_OP
+ * [X] %left LOGIOR
+ * [X] %left LOGIAND
+ * [X] %left '|'
+ * [X] %left '^'
+ * [X] %left '&'
+ * [X] %left EQUALITY
+ * [X] %left RELATION
+ * [X] %left SHIFT
+ * [X] %left '+' '-'
+ * [X] %left '*' '/' '%'
+ * [ ] %right INC_PRE DEC_PRE '!' UMINUS UPLUS '~' TYPE_CAST ADDR_OP INDI_OP
+ * [ ] %left FUNC_CALL ARRAY_SUB MEMBER_ACC INC_POST DEC_POST
+
+
+Check Box
+  - [X] Box1

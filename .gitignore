@@ -1,0 +1,9 @@
+# ignore these file to git
+*.tab.*
+*_lex.c
+*.o
+cscript
+*_test.c
+test
+*.output
+*.out
