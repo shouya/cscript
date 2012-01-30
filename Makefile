@@ -41,7 +41,8 @@ $(YACC_OUT_C): $(YACC_SRC)
 
 .PHONY : clean
 clean:
-	/bin/rm -f $(YACC_OUT_H) $(YACC_OUT_C) $(LEX_OUT) $(BUILD_TARGET) *.o
+	/bin/rm -f $(YACC_OUT_H) $(YACC_OUT_C) $(LEX_OUT) $(BUILD_TARGET) *.o \
+		*.output
 
 rebuild: clean all
 

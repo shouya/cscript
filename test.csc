@@ -18,6 +18,12 @@ p = (((a==b) != ((c<=d)>e))!=f);
 /*auto a=1, p=3, b=b, e, f, g;*/
 
 
-if (a <= 2) {
+/*if (a <= 2) {
 	a += 2;
-};
+	};*/
+
+while (true) {
+}
+func(a, b, c) {
+	a = b;
+}

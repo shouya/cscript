@@ -9,6 +9,7 @@ void yyerror(char *s, ...);
 extern int yylex(void);
 
 extern int yylineno;
+
 %}
 
 %union {
@@ -29,7 +30,7 @@ extern int yylineno;
 
 /* key word */
 %token IF ELSE WHILE FOR DO SWITCH CASE
-%token DEFAULT BREAK CONTINUE
+%token DEFAULT BREAK CONTINUE REDO
 %token RETURN TYPEOF IN STRUCT ENUM LAMBDA IMPORT XNULL
 %token AUTO EXTERN
 
@@ -73,10 +74,18 @@ extern int yylineno;
 
 %nonassoc HIGHEST
 
+%code top {
+#define EMIT0(type) cscript_emit0(type);
+#define EMIT1(type,a) cscript_emit1(type,a);
+#define EMIT2(type,a,b) cscript_emit2(type,a,b);
+#define EMIT3(type,a,b,c) cscript_emit3(type,a,b,c);
+}
+
 %%
 
 main_rule:
 	|	main_rule statement
+	|	main_rule function_defination
 	;
 
 /* literal */
@@ -95,7 +104,7 @@ floatnumber:	FLTNUM	{ emit("A FLOAT(%g)", $1); }
 	;
 
 /* name */
-name:		NAME			{ emit("A NAME(%s)", $1); }
+name:		NAME		{ emit("A NAME(%s)", $1); }
 	|	expr ARROW NAME	%prec MEMBER_ACC { emit("MEMBER ACCESS(->)"); }
 	|	expr POINT NAME %prec MEMBER_ACC { emit("MEMBER ACCESS(.)"); }
 	|	name '[' expr ']' %prec ARRAY_SUB
@@ -128,7 +137,7 @@ parameter_list:	name_list
 
 name_list:
 	|	NAME
-	|	name_list ',' NAME	{ emit("STICKY"); }
+	|	name_list ',' NAME	{ emit("GLUE"); }
 	;
 
 /* variable declaration */
@@ -137,7 +146,7 @@ variable_declaration:
 	;
 
 decl_list:	decl_list_item
-	|	decl_list ',' decl_list_item	{ emit("STICKY"); }
+	|	decl_list ',' decl_list_item	{ emit("GLUE"); }
 	;
 
 decl_list_item:	NAME		{ emit("A VARIABLE(%s)", $1); }
@@ -251,6 +260,7 @@ branch_statement:
 	|	for_statement
 	|	for_in_statement
 	|	do_while_statement
+	|	switch_statement
 	;
 /* if */
 if_statement:	if_part %prec SOLE_IF {
@@ -264,67 +274,101 @@ if_statement:	if_part %prec SOLE_IF {
 if_part:	IF '(' expr ')' statement {
 			emit("AS IF PART(STATEMENT)");
 		}
-	|	IF '(' expr ')' block {
-			emit("AS IF PART(BLOCK)");
-		}
 	;
 
 else_part:	ELSE statement {
 			emit("AS ELSE PART(STATEMENT)");
 		}
-	|	ELSE block {
-			emit("AS ELSE PART(BLOCK)");
-		}
 	;
 
 /* block */
-block:		'{' statements '}'	{
-			emit("MAKE A BLOCK");
+block:		'{' raw_block '}'
+
+raw_block:	statements
+	|	raw_statement
+	|	statements raw_statement {
+			emit("GLUE");
 		}
-	|	'{' statements raw_statement '}' {
-			emit("MAKE A BLOCK ENDED WITH A RAW STATEMENT");
-		}
-	|	'{' '}' {
+	|	{
 			emit("AS A EMPTY BLOCK");
 		}
 	;
 
 statements:	statement
 	|	statements statement	{
-			emit("STICKY");
+			emit("GLUE");
 		}
 	;
 
 /* while */
 while_statement:
 		WHILE '(' expr ')' statement { emit("AS A WHILE WITH STATE"); }
-	|	WHILE '(' expr ')' block     { emit("AS A WHILE WITH BLOCK"); }
 	;
 
 /* for and for-in statement */
 for_statement:	FOR '(' raw_statement ';' raw_statement ';' raw_statement ')'
 		statement { emit("AS A FOR WITH STATEMENT"); }
-	|	FOR '(' raw_statement ';' raw_statement ';' raw_statement ')'
-		block { emit("AS A FOR WITH BLOCK"); }
 	;
 
 for_in_statement:
 		FOR '(' NAME IN expr ')' statement {
 			emit("AS A FOR IN STATEMENT WITH STATEMENT");
 		}
-	|	FOR '(' NAME IN expr ')' block {
-			emit("AS A FOR IN STATEMENT WITH BLOCK");
-		}
 	;
-
 /* do-while */
 do_while_statement:
 		DO statement WHILE '(' expr ')' {
 			emit("DO_WHILE WITH STATEMENT");
 		}
-	|	DO block WHILE '(' expr ')'	{
-			emit("DO_WHILE WITH BLOCK");
+	;
+
+/* loop contorl */
+loop_control_statement:
+		continue_statement
+	|	break_statement
+	|	redo_statement
+	;
+continue_statement:
+		CONTINUE
+	|	CONTINUE INTNUM
+	;
+break_statement:
+		BREAK
+	|	BREAK INTNUM
+	;
+redo_statement:	REDO
+	|	REDO INTNUM
+	;
+
+
+/* switch statement */
+switch_statement:
+		SWITCH '(' expr ')' '{' switch_content '}'
+	|	SWITCH '(' expr ')' '{' '}'
+	;
+
+switch_content:	switch_item
+	|	switch_content switch_item
+	;
+
+switch_item:	CASE expr ':' statements
+	|	DEFAULT ':' statements
+	;
+
+/* function defination */
+function_defination:
+		NAME '(' parameter_list ')' '{' statements '}' {
+			emit("DEFINING FUNCTION(%s)", $1);
 		}
+	;
+
+/* function calling */
+function_call:	name '(' expr_list ')' %prec FUNC_CALL { emit("F CALL"); }
+	;
+
+expr_list:
+	|	expr
+	|	expr_list ',' expr { emit("GLUE"); }
 	;
 
 
@@ -336,13 +380,16 @@ expr:		literal
 	|	unary_operation
 	|	trenary_operation
 	|	'(' expr ')'
+	|	function_call
 	;
 
 /* statement */
 statement:	expr ';'
 	|	declaration ';'
 	|	branch_statement
+	|	loop_control_statement ';'
 	|	';'
+	|	block
 	;
 
 raw_statement:	expr
@@ -351,6 +398,14 @@ raw_statement:	expr
 
 
 %%
+
+#ifdef EMIT0
+# undef EMIT0
+# undef EMIT1
+# undef EMIT2
+# undef EMIT3
+#endif
+
 
 int emit(char *s, ...)
 {
