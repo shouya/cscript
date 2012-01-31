@@ -3,6 +3,8 @@
 #include <stdlib.h>
 #include <stdarg.h>
 
+#include "cscript_parser_yacc.h"
+
 int emit(char *s, ...);
 void yyerror(char *s, ...);
 
@@ -94,7 +96,7 @@ literal:	string
 	|	floatnumber
 	;
 
-string:		STRING	{ emit("A STRING(\"%s\")", $1); }
+string:		STRING	{ EMIT1(_STRING, $1); }
 	;
 
 integer:	INTNUM	{ emit("A INT(%d)", $1); }

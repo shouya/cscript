@@ -81,10 +81,9 @@ enum {
 };
 
 extern void
-emit0(int type),
-emit1(int type, void *a1),
-emit2(int type, void *a1, void *a2),
-emit3(int type, void *a1, void *a2, void *a3);
-
+cscript_emit0(int type),
+cscript_emit1(int type, void *a1),
+cscript_emit2(int type, void *a1, void *a2),
+cscript_emit3(int type, void *a1, void *a2, void *a3);
 
 #endif /* _cscript_parser_yacc_h_ */
