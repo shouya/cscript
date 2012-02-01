@@ -29,3 +29,10 @@ if (cond) { a(0); } /* can recognize now */
 it's strange, the reason still unkown.
 
 
+
+PLAN
+* add `in' operator support
+* binary tree module can complete the `traverse' and `count' interface
+the traverse should use the in-order method.
+
+
