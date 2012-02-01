@@ -357,13 +357,6 @@ switch_item:	CASE expr ':' statements
 	|	DEFAULT ':' statements
 	;
 
-/* function defination */
-function_defination:
-		NAME '(' parameter_list ')' '{' statements '}' {
-			emit("DEFINING FUNCTION(%s)", $1);
-		}
-	;
-
 /* function calling */
 function_call:	name '(' expr_list ')' %prec FUNC_CALL { emit("F CALL"); }
 	;
@@ -373,6 +366,13 @@ expr_list:
 	|	expr_list ',' expr { emit("GLUE"); }
 	;
 
+
+/* function defination */
+function_defination:
+		NAME '(' parameter_list ')' '{' raw_block '}' {
+			emit("DEFINING FUNCTION(%s)", $1);
+		}
+	;
 
 /* expression */
 expr:		literal
