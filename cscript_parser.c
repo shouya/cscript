@@ -81,6 +81,7 @@ cscript_emit0(int type)
 	case _EXPR_LIST_ITEM:
 	case _EMPTY_STMT:
 	case _EMPTY_BLOCK:
+	case _XNULL:
 		_stk_push(_mknode1(type, 0,
 				   _stk_pop()));
 		break;

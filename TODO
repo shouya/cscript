@@ -19,7 +19,7 @@ state 6
     please resolve it. refer what the book says.
 }
 
-** TODO `for in' statement should be 1,3 but 0,3
+** DONE `for in' statement should be 1,3 but 0,3
 ** DONE why cannot a plain function call statement parse? like follows:
 a(0); /* cannot recognize */
 if (cond) { a(0); } /* can recognize now */
@@ -30,7 +30,7 @@ it's strange, the reason still unkown.
 
 
 * PLAN
-** TODO add `in' operator support
+** DONE add `in' operator support
 ** TODO binary tree module can complete the `traverse' and `count' interface
 the traverse should use the in-order method.
 

@@ -82,6 +82,7 @@ enum {
 	/*0,2*/	_IN,
 	/*0,0*/	_EMPTY_STMT,
 	/*0,0*/	_EMPTY_BLOCK,
+	/*0,0*/	_XNULL,
 	/*vir*/	_INST_MAX,
 };
 

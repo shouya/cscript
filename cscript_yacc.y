@@ -105,6 +105,7 @@ main_rule:
 literal:	string
 	|	integer
 	|	floatnumber
+	|	XNULL
 	;
 
 string:		STRING	{ EMIT1(_STRING, $1); }
