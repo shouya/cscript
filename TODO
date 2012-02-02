@@ -1,9 +1,7 @@
 # -*- org -*-
 
-BUGS
-* `for in' statement should be 1,3 but 0,3
-* conflict solution {
-
+* BUGS
+** DONE conflict solution {
 state 6
 
    10 name: NAME .
@@ -21,7 +19,8 @@ state 6
     please resolve it. refer what the book says.
 }
 
-* why cannot a plain function call statement parse? like follows:
+** TODO `for in' statement should be 1,3 but 0,3
+** DONE why cannot a plain function call statement parse? like follows:
 a(0); /* cannot recognize */
 if (cond) { a(0); } /* can recognize now */
 {a(0);} /* okay now */
@@ -30,9 +29,11 @@ it's strange, the reason still unkown.
 
 
 
-PLAN
-* add `in' operator support
-* binary tree module can complete the `traverse' and `count' interface
+* PLAN
+** TODO add `in' operator support
+** TODO binary tree module can complete the `traverse' and `count' interface
 the traverse should use the in-order method.
 
 
+* PAY ATTENTION
+** the operator `in' in cscript is not like python do, it evaluates from left to right

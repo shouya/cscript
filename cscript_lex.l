@@ -5,7 +5,7 @@
 #include <string.h>
 #include "cscript_yacc.tab.h"
 
-extern void yyerror(char *s, ...);
+extern void yyerror(const char *s, ...);
 extern int fileno(FILE *stream);
 extern char *strdup(const char *s);
 

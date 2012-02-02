@@ -5,14 +5,26 @@
 
 #include "cscript_parser_yacc.h"
 
-int emit(char *s, ...);
-void yyerror(char *s, ...);
+int emit(const char *s, ...);
+void yyerror(const char *s, ...);
 
 extern int yylex(void);
 
 extern int yylineno;
 
+
+#ifdef _GNUC_
+# define inline __inline__
+#else
+# define inline
+#endif
+
 %}
+
+
+%glr-parser
+%expect 2
+
 
 %union {
 	int intval;
@@ -60,19 +72,18 @@ extern int yylineno;
 %left '^'
 %left '&'
 %left EQUALITY
-%left RELATION
+%left RELATION IN /* added */
 %left SHIFT
 %left '+' '-'
 %left '*' '/' '%'
 %right INCREASE DECREASE '!' '~' UMINUS UPLUS TYPE_CAST ADDR_OP INDI_OP
 /* ^^  ++      --         !   ~  -      +     (int)     *       & */
 %left INC_POST DEC_POST
-%left FUNC_CALL ARRAY_SUB MEMBER_ACC POINT ARROW
+%left '(' '[' POINT ARROW
 
 /* pseudo precedences */
 %nonassoc SOLE_IF
 %nonassoc ELSE
-
 
 %nonassoc HIGHEST
 
@@ -106,18 +117,18 @@ floatnumber:	FLTNUM	{ emit("A FLOAT(%g)", $1); }
 	;
 
 /* name */
-name:		NAME		{ emit("A NAME(%s)", $1); }
-	|	expr ARROW NAME	%prec MEMBER_ACC { emit("MEMBER ACCESS(->)"); }
-	|	expr POINT NAME %prec MEMBER_ACC { emit("MEMBER ACCESS(.)"); }
-	|	name '[' expr ']' %prec ARRAY_SUB
-/*	|	'*' name %prec ADDR_OP*/
+expr:		NAME		{ emit("A NAME(%s)", $1); }
+	|	expr ARROW NAME { emit("MEMBER ACCESS(->)"); }
+	|	expr POINT NAME { emit("MEMBER ACCESS(.)"); }
+	|	expr '[' expr ']'
 	;
 
+
 /* assignment */
-assignment:	name '=' expr %prec ASSIGNMENT {
+assignment:	expr '=' expr %prec ASSIGNMENT {
 			emit("ASGN(=)");
 		}
-	|	name ASSIGNMENT expr {
+	|	expr ASSIGNMENT expr {
 			emit("ASGN(%c)", $2);
 		}
 	;
@@ -199,6 +210,9 @@ binary_operation:
 	|	expr LOGIOR expr {
 			emit("LOGI OR");
 		}
+	|	expr IN expr %dprec 1 {
+			emit("IN");
+		}
 	;
 
 /* unary operation */
@@ -230,9 +244,9 @@ unary_operation:
 	|	'(' type ')' expr %prec TYPE_CAST {
 			emit("TYPE CAST");
 		}
-/*	|	'&' name %prec ADDR_OP {
+	|	'&' expr %prec ADDR_OP {
 			emit("GET ADDRESS");
-		}*/
+		}
 	|	'*' expr %prec INDI_OP {
 			emit("INDIRECT OPERATION");
 		}
@@ -313,7 +327,7 @@ for_statement:	FOR '(' raw_statement ';' raw_statement ';' raw_statement ')'
 	;
 
 for_in_statement:
-		FOR '(' NAME IN expr ')' statement {
+		FOR '(' NAME IN expr ')' statement %dprec 2 {
 			emit("AS A FOR IN STATEMENT WITH STATEMENT");
 		}
 	;
@@ -358,10 +372,10 @@ switch_item:	CASE expr ':' statements
 	;
 
 /* function calling */
-function_call:	name '(' expr_list ')' %prec FUNC_CALL { emit("F CALL"); }
+function_call:	expr '(' expr_list ')' { emit("F CALL"); }
 	;
 
-expr_list:
+expr_list:	{ emit("EMPTY EXPR"); }
 	|	expr
 	|	expr_list ',' expr { emit("GLUE"); }
 	;
@@ -376,7 +390,6 @@ function_defination:
 
 /* expression */
 expr:		literal
-	|	name
 	|	assignment
 	|	binary_operation
 	|	unary_operation
@@ -409,7 +422,7 @@ raw_statement:	expr
 #endif
 
 
-int emit(char *s, ...)
+int emit(const char *s, ...)
 {
     va_list ap;
     va_start(ap, s);
@@ -423,7 +436,7 @@ int emit(char *s, ...)
     return 0;
 }
 
-void yyerror(char *s, ...)
+void yyerror(const char *s, ...)
 {
     va_list ap;
     va_start(ap, s);
