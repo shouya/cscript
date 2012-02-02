@@ -4,7 +4,6 @@
 #include "cscript_parser.h"
 #include "cscript_parser_yacc.h"
 
-
 struct _stk {
 	struct csp_node *data;
 	struct _stk *next;
@@ -34,6 +33,9 @@ static struct csp_node *
 _mknode4(int type, int flags, struct csp_node *op1, struct csp_node *op2,
 	 struct csp_node *op3, struct csp_node *op4);
 
+static struct csp_node *
+_dealinst(int type, int flags, struct csp_node *op1, struct csp_node *op2,
+	  struct csp_node *op3, struct csp_node *op4);
 
 /* interface implements */
 void
@@ -43,6 +45,8 @@ cscript_parser_init(void)
 		_stk_free();
 	}
 }
+
+
 
 extern void
 cscript_emit0(int type)
@@ -67,6 +71,7 @@ cscript_emit0(int type)
 	case _UMINUS:
 	/* case _UPLUS: useless */
 	case _INDIRECTION:
+	case _ADDRESS:
 	case _TYPE_POINTER:
 	case _ELSE_PART:
 	case _SOLE_IF:
@@ -74,6 +79,8 @@ cscript_emit0(int type)
 	case _SWITCH_EMPTY:
 	case _SWITCH_ITEM_DEFUALT:
 	case _EXPR_LIST_ITEM:
+	case _EMPTY_STMT:
+	case _EMPTY_BLOCK:
 		_stk_push(_mknode1(type, 0,
 				   _stk_pop()));
 		break;
@@ -98,6 +105,7 @@ cscript_emit0(int type)
 	case _SWITCH:
 	case _SWITCH_ITEM:
 	case _FUNC_CALL:
+	case _IN:
 		_stk_push(_mknode2(type, 0,
 				   _stk_pop(), _stk_pop()));
 		break;

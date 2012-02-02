@@ -318,17 +318,24 @@ statements:	statement
 
 /* while */
 while_statement:
-		WHILE '(' expr ')' statement { emit("AS A WHILE WITH STATE"); }
+		WHILE '(' expr ')' statement { emit("AS A WHILE"); }
 	;
 
 /* for and for-in statement */
-for_statement:	FOR '(' raw_statement ';' raw_statement ';' raw_statement ')'
-		statement { emit("AS A FOR WITH STATEMENT"); }
+for_statement:	FOR '(' raw_statement_or_empty ';'
+		raw_statement_or_empty ';'
+		raw_statement_or_empty ')'
+		statement { emit("AS A FOR"); }
+	;
+
+raw_statement_or_empty:
+		raw_statement
+	|	{ emit("EMPTY STATEMENT"); }
 	;
 
 for_in_statement:
 		FOR '(' NAME IN expr ')' statement %dprec 2 {
-			emit("AS A FOR IN STATEMENT WITH STATEMENT");
+			emit("AS A FOR IN VAR(%s)", $3);
 		}
 	;
 /* do-while */
@@ -403,7 +410,7 @@ statement:	expr ';'
 	|	declaration ';'
 	|	branch_statement
 	|	loop_control_statement ';'
-	|	';'
+	|	';' { emit("EMPTY STATEMENT"); }
 	|	block
 	;
 

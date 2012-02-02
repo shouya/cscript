@@ -11,20 +11,20 @@
   every command takes one seat on stack after it executed.
  */
 enum {
-	/*1,0*/	_STRING,
+	/*1,0*/	_STRING = 1,
 	/*1,0*/	_INTEGER,
 	/*1,0*/	_FLOAT,
 	/*1,0*/	_NAME,
-	/*1,1*/	_EXP_POINT_NAME, /* (a[6]).member */
-	/*1,1*/	_EXP_ARROW_NAME, /* (pa[6])->member */
-	/*0,2*/	_ARRAY_SUB, /* a[6+1] */
-	/*1,2*/	_ASGN, /* a += 4+2 */
-	/*0,2*/	_DIRECT_ASGN, /* a = 6 */
-	/*1,1*/	_FUNC_DECL, /* extern func(param0, param1); */
-	/*1,0*/	_NAME_LIST_ITEM, /* param0, param1, ... STUCK */
-	/*0,0*/	_VAR_DECL, /* auto a, b=2, c; */
-	/*1,0*/	_VAR_DECL_ITEM, /* a, c ... STUCK */
-	/*1,1*/	_VAR_DECL_ITEM_INIT, /* a=1, b=a+1, c=2 ... STUCK */
+	/*1,1*/	_EXP_POINT_NAME,
+	/*1,1*/	_EXP_ARROW_NAME,
+	/*0,2*/	_ARRAY_SUB,
+	/*1,2*/	_ASGN,
+	/*0,2*/	_DIRECT_ASGN,
+	/*1,1*/	_FUNC_DECL,
+	/*1,0*/	_NAME_LIST_ITEM,
+	/*0,0*/	_VAR_DECL,
+	/*1,0*/	_VAR_DECL_ITEM,
+	/*1,1*/	_VAR_DECL_ITEM_INIT,
 	/*0,2*/	_GLUE,
 	/*0,2*/	_PLUS,
 	/*0,2*/	_MINUS,
@@ -48,6 +48,7 @@ enum {
 	/*0,1*/	_UMINUS,
 	/*0,1*/	_UPLUS,
 	/*0,1*/	_INDIRECTION,
+	/*0,1*/	_ADDRESS,
 	/*0,2*/	_TYPE_CAST,
 	/*0,0*/	_TYPE_INT,
 	/*0,0*/	_TYPE_STR,
@@ -78,6 +79,10 @@ enum {
 	/*0,2*/	_FUNC_CALL,
 	/*0,1*/	_EXPR_LIST_ITEM,
 	/*0,1* /	_EXPR,*/
+	/*0,2*/	_IN,
+	/*0,0*/	_EMPTY_STMT,
+	/*0,0*/	_EMPTY_BLOCK,
+	/*vir*/	_INST_MAX,
 };
 
 extern void
@@ -85,5 +90,7 @@ cscript_emit0(int type),
 cscript_emit1(int type, void *a1),
 cscript_emit2(int type, void *a1, void *a2),
 cscript_emit3(int type, void *a1, void *a2, void *a3);
+
+
 
 #endif /* _cscript_parser_yacc_h_ */
